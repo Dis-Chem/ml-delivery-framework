@@ -1,0 +1,13 @@
+"""Unit tests for the data_processing pipeline's nodes.
+
+Test nodes directly as plain functions — no Kedro session/catalog needed for a node unit test.
+"""
+import pandas as pd
+
+from {{template `project_name_alphanumeric_underscore` .}}.pipelines.data_processing.nodes import placeholder_node
+
+
+def test_placeholder_node_returns_input_unchanged():
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    result = placeholder_node(df)
+    pd.testing.assert_frame_equal(result, df)

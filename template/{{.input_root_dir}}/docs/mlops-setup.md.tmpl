@@ -56,29 +56,23 @@ git push upstream {{ .input_default_branch }}
   If the admin console UI loads instead of the Databricks workspace homepage, you are an admin.
 
 ### Set up authentication for CI/CD
+
+CI/CD authenticates to Databricks using **GitHub OIDC federation** to Databricks service principals.
+There are **no Databricks tokens or client secrets to store** — GitHub Actions exchanges a short-lived
+OIDC token for Databricks access at runtime.
+
 #### Set up Service Principal
-{{ if eq .input_cloud `azure` }}
-To authenticate and manage ML resources created by CI/CD, 
-[service principals]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals")) }})
-for the project should be created and added to both staging and prod workspaces. Follow
-[Add a service principal to your Azure Databricks account]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals#--add-a-service-principal-to-your-azure-databricks-account")) }})
-and [Add a service principal to a workspace]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals#--add-a-service-principal-to-a-workspace")) }})
-for details.
-
-For your convenience, we also have Terraform modules that can be used to [create](https://registry.terraform.io/modules/databricks/mlops-azure-project-with-sp-creation/databricks/latest) or [link](https://registry.terraform.io/modules/databricks/mlops-azure-project-with-sp-linking/databricks/latest) service principals.
-
-{{ else }}
-To authenticate and manage ML resources created by CI/CD, 
+To authenticate and manage ML resources created by CI/CD,
 [service principals]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals.html")) }})
-for the project should be created and added to both staging and prod workspaces. Follow
+for the project should be created and added to the relevant workspaces. Follow
 [Add a service principal to your Databricks account]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals.html#add-a-service-principal-to-your-databricks-account")) }})
 and [Add a service principal to a workspace]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals.html#add-a-service-principal-to-a-workspace")) }})
 for details.
 
-{{ if eq .input_cloud `aws` }}
+During the dev_qa-only PoC you only need **one** service principal, added to the dev_qa (UAT)
+workspace. Add a prod service principal later when you enable the prod target.
+
 For your convenience, we also have a [Terraform module](https://registry.terraform.io/modules/databricks/mlops-aws-project/databricks/latest) that can set up your service principals.
-{{ end }}
-{{ end }}
 
 #### Configure Service Principal (SP) permissions 
 If the created project uses **Unity Catalog**, we expect a catalog to exist with the name of the deployment target by default. 
@@ -105,34 +99,29 @@ i.e. for each environment
 - MODIFY permission for the output table if it pre-dates your job.
 
 
-#### Set secrets for CI/CD
-{{ if eq .input_cloud `azure` }}
-After creating the service principals and adding them to the respective staging and prod workspaces, refer to
-[Manage access tokens for a service principal]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals#--manage-access-tokens-for-a-service-principal")) }})
-and [Get Azure AD tokens for service principals]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "dev-tools/api/latest/aad/service-prin-aad-token")) }})
-to get your service principal credentials (tenant id, application id, and client secret) for both the staging and prod service principals, and [Encrypted secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
-to add the following secrets to GitHub:
-- `PROD_AZURE_SP_TENANT_ID`
-- `PROD_AZURE_SP_APPLICATION_ID`
-- `PROD_AZURE_SP_CLIENT_SECRET`
-- `STAGING_AZURE_SP_TENANT_ID`
-- `STAGING_AZURE_SP_APPLICATION_ID`
-- `STAGING_AZURE_SP_CLIENT_SECRET`
-- `WORKFLOW_TOKEN` : [Github token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) with workflow permissions. This secret is needed for the Deploy CI/CD Workflow.
-Be sure to update the [Workflow Permissions](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token) section under Repo Settings > Actions > General to allow `Read and write permissions`.
-{{ else }}
-After creating the service principals and adding them to the respective staging and prod workspaces, follow
-[Manage access tokens for a service principal]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals.html#manage-access-tokens-for-a-service-principal")) }})
-to get service principal tokens for staging and prod workspace and follow [Encrypted secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
-to add the secrets to GitHub:
-- `STAGING_WORKSPACE_TOKEN` : service principal token for staging workspace
-- `PROD_WORKSPACE_TOKEN` : service principal token for prod workspace
-- `WORKFLOW_TOKEN` : [Github token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) with workflow permissions. This secret is needed for the Deploy CI/CD Workflow.
+#### Federate GitHub OIDC to the service principal
+Configure Databricks so it trusts your GitHub repository's OIDC token — this replaces stored
+secrets. Create a [federation policy]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "dev-tools/auth/provider-github.html")) }})
+for the service principal that scopes the token subject to this repository (and optionally a
+specific branch or GitHub environment). Once federated, GitHub Actions obtains Databricks access
+with no client secret.
 
-Next, be sure to update the [Workflow Permissions](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token) section under Repo Settings > Actions > General:
+#### Set the CI/CD variables
+Add the service principal **application (client) IDs** as GitHub Actions **variables** (not secrets —
+OIDC needs no stored credential): Repo Settings > Secrets and variables > Actions > **Variables**:
+- `STAGING_CLIENT_ID` : application ID of the dev_qa (UAT) service principal.
+- `PROD_CLIENT_ID` : application ID of the prod service principal. Leave **unset** during the
+  dev_qa-only PoC — the prod CI/CD jobs stay dormant until this variable exists.
+
+The workspace hosts are already baked into the workflows and `databricks.yml`, so no host
+variable/secret is needed.
+
+Add one repository **secret**:
+- `WORKFLOW_TOKEN` : a [GitHub token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) with workflow permissions, used by the Deploy CI/CD workflow.
+
+Next, update the [Workflow Permissions](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token) section under Repo Settings > Actions > General:
 - Allow `Read and write permissions`,
 - Allow workflows to be able to open pull requests (PRs).
-{{ end }}
 
 ### Setting up CI/CD workflows
 After setting up authentication for CI/CD, you can now set up CI/CD workflows. We provide a [Deploy CICD workflow](../.github/workflows/deploy-cicd.yml) that can be used to generate the other CICD workflows mentioned below for projects. 

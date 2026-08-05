@@ -14,7 +14,7 @@ The default stack in this repo includes three modular components:
 |-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [ML Code](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/)                     | Example ML project structure ([training](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/training) and [batch inference](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/deployment/batch_inference), etc), with unit tested Python modules and notebooks                                                                                           | Quickly iterate on ML problems, without worrying about refactoring your code into tested modules for productionization later on.                                                        |
 | [ML Resources as Code](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources) | ML pipeline resources ([training](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources/model-workflow-resource.yml.tmpl) and [batch inference](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources/batch-inference-workflow-resource.yml.tmpl) jobs, etc) defined through [databricks CLI bundles](https://docs.databricks.com/dev-tools/cli/bundle-cli.html)    | Govern, audit, and deploy changes to your ML resources (e.g. "use a larger instance type for automated model retraining") through pull requests, rather than adhoc changes made via UI. |
-| CI/CD([GitHub Actions](template/{{.input_root_dir}}/.github/) or [Azure DevOps](template/{{.input_root_dir}}/.azure/))                       | [GitHub Actions](https://docs.github.com/en/actions) or [Azure DevOps](https://azure.microsoft.com/en-us/products/devops) workflows to test and deploy ML code and resources | Ship ML code faster and with confidence: ensure all production changes are performed through automation and that only tested code is deployed to prod                                   |
+| CI/CD([GitHub Actions](template/{{.input_root_dir}}/.github/))                       | [GitHub Actions](https://docs.github.com/en/actions) workflows to test and deploy ML code and resources | Ship ML code faster and with confidence: ensure all production changes are performed through automation and that only tested code is deployed to prod                                   |
 
 See the [FAQ](#FAQ) for questions on common use cases.
 
@@ -76,10 +76,10 @@ This will prompt for parameters for initialization. Some of these parameters are
    We expect Data Scientists to specify ``Project_Only`` to get 
    started in a development capacity, and when ready to move the project to Staging/Production, CI/CD can be set up. We expect that step to be done by Machine Learning Engineers (MLEs) who can specify ``CICD_Only`` during initialization and use the provided workflow to setup CI/CD for one or more projects.
  * ``input_root_dir``: name of the root directory. When initializing with ``CICD_and_Project``, this field will automatically be set to ``input_project_name``.
- * ``input_cloud``: Cloud provider you use with Databricks (AWS, Azure, or GCP).
+ * ``input_cloud``: Cloud provider you use with Databricks. This template is locked to AWS.
 
 Others must be correctly specified for CI/CD to work:
- * ``input_cicd_platform`` : CI/CD platform of choice. Currently we support GitHub Actions, GitHub Actions for GitHub Enterprise Servers, Azure DevOps and GitLab.
+ * ``input_cicd_platform`` : CI/CD platform of choice. This template is locked to GitHub Actions, which authenticates to Databricks via GitHub OIDC federation to Databricks service principals (no stored PAT tokens).
  * ``input_databricks_staging_workspace_host``: URL of staging Databricks workspace, used to preview config changes before they're deployed to production.  
  We encourage granting data scientists working on the current ML project non-admin (read) access to this workspace,
    to enable them to view and debug CI test results
@@ -129,8 +129,8 @@ and ``{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/
 For this use case, we recommend instantiating via [Databricks asset bundle templates](https://docs.databricks.com/en/dev-tools/bundles/templates.html) 
 and copying the relevant subdirectories. For example, all ML resource configs
 are defined under ``{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/resources``
-and ``{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/databricks.yml``, while CI/CD is defined e.g. under `.github`
-if using GitHub Actions, or under `.azure` if using Azure DevOps.
+and ``{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/databricks.yml``, while CI/CD is defined under `.github`
+for GitHub Actions.
 
 ### Can I customize my MLOps Stack?
 Yes. We provide the default stack in this repo as a production-friendly starting point for MLOps.
@@ -197,26 +197,11 @@ a generated new ML project. To do this, you can create an example
 project from your local checkout of the repo, and inspect its contents/run tests within
 the project.
 
-We provide example project configs for Azure (using both GitHub and Azure DevOps), AWS (using GitHub), and GCP (using GitHub) under `tests/example-project-configs`.
-To create an example Azure project, using Azure DevOps as the CI/CD platform, run the following from the desired parent directory
+We provide an example project config for AWS (using GitHub Actions) under `tests/example-project-configs`.
+To create an example AWS project, using GitHub Actions for CI/CD, run the following from the desired parent directory
 of the example project:
-
-```
-# Note: update MLOPS_STACKS_PATH to the path to your local checkout of the MLOps Stacks repo
-MLOPS_STACKS_PATH=~/mlops-stacks
-databricks bundle init "$MLOPS_STACKS_PATH" --config-file "$MLOPS_STACKS_PATH/tests/example-project-configs/azure/azure-devops.json"
-```
-
-To create an example AWS project, using GitHub Actions for CI/CD, run:
 ```
 # Note: update MLOPS_STACKS_PATH to the path to your local checkout of the MLOps Stacks repo
 MLOPS_STACKS_PATH=~/mlops-stacks
 databricks bundle init "$MLOPS_STACKS_PATH" --config-file "$MLOPS_STACKS_PATH/tests/example-project-configs/aws/aws-github.json"
-```
-
-To create an example GCP project, using GitHub Actions for CI/CD, run:
-```
-# Note: update MLOPS_STACKS_PATH to the path to your local checkout of the MLOps Stacks repo
-MLOPS_STACKS_PATH=~/mlops-stacks
-databricks bundle init "$MLOPS_STACKS_PATH" --config-file "$MLOPS_STACKS_PATH/tests/example-project-configs/gcp/gcp-github.json"
 ```

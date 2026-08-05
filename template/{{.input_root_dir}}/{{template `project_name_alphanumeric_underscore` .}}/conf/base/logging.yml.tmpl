@@ -1,0 +1,25 @@
+# Kedro logging config. File-based logging is disabled — Databricks Workflow runs are ephemeral
+# and file handlers would write to a path that doesn't persist; use stdout, which Databricks
+# captures as the job run's logs.
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  simple:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simple
+    stream: ext://sys.stdout
+
+loggers:
+  kedro:
+    level: INFO
+  {{template `project_name_alphanumeric_underscore` .}}:
+    level: INFO
+
+root:
+  handlers: [console]

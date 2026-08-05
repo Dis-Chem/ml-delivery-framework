@@ -14,31 +14,54 @@
 {{ else if (eq .input_setup_cicd_and_project `CICD_Only`) }}
     {{ skip (printf `%s/%s` $root_dir $project_name_alphanumeric_underscore) }}
     {{ skip (printf `%s/%s/%s-*` $root_dir `.github/workflows` .input_project_name) }}
-    {{ skip (printf `%s/%s/%s-*` $root_dir `.azure/devops-pipelines` .input_project_name) }}
 {{ end }}
 
-{{ if (or (eq .input_cicd_platform `github_actions`) (eq .input_cicd_platform `github_actions_for_github_enterprise_servers`)) }}
-    {{ skip (printf `%s/%s` $root_dir `.azure`) }}
-    {{ skip (printf `%s/%s` $root_dir `.gitlab`) }}
-{{ else if (eq .input_cicd_platform `azure_devops`) }}
-    {{ skip (printf `%s/%s` $root_dir `.github`) }}
-    {{ skip (printf `%s/%s` $root_dir `.gitlab`) }}
-{{ else if (eq .input_cicd_platform `gitlab`) }}
-    {{ skip (printf `%s/%s` $root_dir `.github`) }}
-    {{ skip (printf `%s/%s` $root_dir `.azure`) }}
-{{ end }}
+# This template is locked to GitHub Actions on AWS; no other CI/CD platform dirs exist.
 
 {{ if (not (eq .input_project_name `27896cf3-bb3e-476e-8129-96df0406d5c7`)) }}
     {{ skip (printf `%s/%s` $root_dir `_params_testing_only.txt`) }}
 {{ end }}
 
-# Remove Feature Store code if not selected; remove Delta Train notebook if Feature Store is selected
-{{ if (eq .input_include_feature_store `yes`) }}
-    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `training/Train.py`) }}
-{{ else }}
+# Project skeleton: mlops_stacks_native (training/deployment/validation/monitoring, requirements.txt)
+# vs kedro (src/, conf/, pyproject.toml). Each flavor skips the other's tree entirely.
+{{ if (eq .input_project_skeleton `kedro`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `training`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `deployment`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `validation`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `monitoring`) }}
     {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `feature_engineering`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `requirements.txt`) }}
     {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `tests/feature_engineering`) }}
-    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `training/TrainWithFeatureStore.py`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `tests/training`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `resources/monitoring-resource.yml`) }}
+
+    # Feature Store: kedro's variant is the feature_engineering Kedro pipeline + its unit tests,
+    # not the native notebook tree above (already skipped unconditionally for kedro).
+    {{ if (eq .input_include_feature_store `no`) }}
+        {{ skip (printf `%s/%s/src/%s/pipelines/feature_engineering` $root_dir $project_name_alphanumeric_underscore $project_name_alphanumeric_underscore) }}
+        {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `tests/pipelines/feature_engineering`) }}
+    {{ end }}
+{{ else }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `src`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `conf`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `pyproject.toml`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `notebooks`) }}
+    {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `tests/pipelines`) }}
+
+    # Remove Feature Store code if not selected; remove Delta Train notebook if Feature Store is selected
+    # (native-flavor-specific files; see the kedro branch above for kedro's equivalent)
+    {{ if (eq .input_include_feature_store `yes`) }}
+        {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `training/Train.py`) }}
+    {{ else }}
+        {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `feature_engineering`) }}
+        {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `tests/feature_engineering`) }}
+        {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `training/TrainWithFeatureStore.py`) }}
+    {{ end }}
+{{ end }}
+
+# Feature-engineering-workflow-resource.yml is shared by both flavors (skeleton conditional
+# lives inside the file itself) — only its presence depends on the Feature Store toggle.
+{{ if (eq .input_include_feature_store `no`) }}
     {{ skip (printf `%s/%s/%s` $root_dir $project_name_alphanumeric_underscore `resources/feature-engineering-workflow-resource.yml`) }}
 {{ end }}
 

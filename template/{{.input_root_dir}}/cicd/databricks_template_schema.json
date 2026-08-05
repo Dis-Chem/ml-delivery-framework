@@ -26,11 +26,6 @@
       "description": "Release Branch",
       "type": "string"
     },
-    "cloud_specific_node_type_id": {
-      "order": 6,
-      "description": "Cloud Specific Node Type ID",
-      "type": "string"
-    },
     "input_cli_version": {
       "order": 7,
       "description": "CLI Version",
@@ -40,19 +35,19 @@
       "order": 8,
       "type": "string",
       "description": "\nName of the Test Unity Catalog",
-      "default": "test"
+      "default": "dev_qa_data_analytics_consumption_dev"
     },
     "input_staging_catalog_name": {
       "order": 9,
       "type": "string",
-      "description": "\nName of the Staging Unity Catalog",
-      "default": "staging"
+      "description": "\nName of the dev_qa (UAT) Unity Catalog",
+      "default": "dev_qa_data_analytics_consumption_dev"
     },
     "input_prod_catalog_name": {
       "order": 10,
       "type": "string",
       "description": "\nName of the Prod Unity Catalog",
-      "default": "prod"
+      "default": "TODO_prod_data_analytics_consumption_prod"
     },
     "input_project_name": {
       "order": 11,

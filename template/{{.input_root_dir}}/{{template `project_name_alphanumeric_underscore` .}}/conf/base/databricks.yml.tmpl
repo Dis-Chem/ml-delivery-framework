@@ -1,0 +1,15 @@
+# kedro-databricks workflow overrides (NOT the top-level DAB bundle config — that is this
+# project's ../databricks.yml). This file customises the job/task shape kedro-databricks would
+# generate from this project's pipelines, e.g. compute per node/pipeline.
+#
+# This template defaults to SERVERLESS compute everywhere (see docs/architecture-decisions.md
+# ADR-05), so no job_cluster overrides are set by default. If a specific pipeline genuinely needs
+# classic compute (a library unavailable on serverless, GPU, a custom init script — see ADR-05's
+# open issue N-09), add an override here scoped to just that pipeline/node, following your
+# installed kedro-databricks version's schema — verify the exact keys against its docs before
+# relying on this file, they were not validated against a live cluster for this template.
+#
+# default_job_cluster:
+#   spark_version: "15.4.x-scala2.12"
+#   node_type_id: "TODO_node_type"
+#   num_workers: 1

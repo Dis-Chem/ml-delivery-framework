@@ -1,0 +1,27 @@
+"""Project settings. See https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
+
+Left at Kedro's defaults deliberately — override only when a real need arises (a custom
+DataCatalog class, session hooks, etc.). Do not add Databricks-specific hacks here; environment
+differences belong in conf/<env>/, not in code (see docs/architecture-decisions.md).
+"""
+
+# Class that manages storing KedroSession data.
+# from kedro.framework.session.store import BaseSessionStore
+# SESSION_STORE_CLASS = BaseSessionStore
+
+# Class that manages the Data Catalog.
+# from kedro.io import DataCatalog
+# DATA_CATALOG_CLASS = DataCatalog
+
+# Hooks are executed in a Last-In-First-Out (LIFO) order.
+# HOOKS = ()
+
+# List of installed plugins for which to disable auto-registry.
+# DISABLE_HOOKS_FOR_PLUGINS = ()
+
+# Class that manages Kedro's library components.
+# from kedro.framework.context import KedroContext
+# CONTEXT_CLASS = KedroContext
+
+# Directory that holds configuration.
+CONF_SOURCE = "conf"

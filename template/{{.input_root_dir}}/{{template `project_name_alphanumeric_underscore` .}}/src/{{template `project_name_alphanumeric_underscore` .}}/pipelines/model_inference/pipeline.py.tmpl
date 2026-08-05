@@ -1,0 +1,11 @@
+"""Pipeline definition for ``model_inference``."""
+from kedro.pipeline import Pipeline
+
+
+def create_pipeline(**kwargs) -> Pipeline:
+    """Create the model_inference pipeline.
+
+    Empty by design — add nodes here as the project grows. See nodes.py: inference must load
+    the model from the Unity Catalog registry (models:/<name>/latest), never from a run URI.
+    """
+    return Pipeline([])

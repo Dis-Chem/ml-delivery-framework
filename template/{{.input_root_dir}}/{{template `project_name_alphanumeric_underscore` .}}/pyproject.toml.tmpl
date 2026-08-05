@@ -1,0 +1,40 @@
+[project]
+name = "{{template `project_name_alphanumeric_underscore` .}}"
+version = "0.1.0"
+description = "{{ .input_project_name }} Kedro pipeline project."
+requires-python = ">=3.10"
+dependencies = [
+    "kedro~=0.19",
+    "kedro-databricks",
+    "kedro-mlflow",
+    "mlflow>=3.1,<4",
+{{- if (eq .input_include_feature_store `yes`) }}
+    "databricks-feature-engineering",
+{{- end }}
+]
+
+[project.scripts]
+{{template `project_name_alphanumeric_underscore` .}} = "{{template `project_name_alphanumeric_underscore` .}}.__main__:main"
+
+[tool.kedro]
+package_name = "{{template `project_name_alphanumeric_underscore` .}}"
+project_name = "{{ .input_project_name }}"
+kedro_init_version = "0.19.0"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

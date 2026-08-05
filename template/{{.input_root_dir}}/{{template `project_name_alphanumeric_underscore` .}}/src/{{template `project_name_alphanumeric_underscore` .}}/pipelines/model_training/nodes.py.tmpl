@@ -1,0 +1,28 @@
+"""Nodes for the ``model_training`` pipeline.
+
+Conventions specific to training:
+  - Read ``test_size``, ``random_state``, ``experiment_name``, and ``registered_model_name`` from
+    parameters.yml (conf/base/parameters.yml) — never hardcode them here.
+  - The trained model is registered to Unity Catalog via ``registered_model_name`` (kedro-mlflow's
+    MLflow hooks handle the actual mlflow.log_model/register_model call from parameters.yml
+    config — do not call mlflow.set_experiment()/register_model() directly in a node).
+  - The run/model identity flows through the Data Catalog (e.g. a ``training_run_id`` catalog
+    entry) between nodes and pipelines — never pass a run id as a live Python variable between
+    pipelines; write it to the catalog and have the next pipeline read it back.
+
+This is a placeholder — replace with real training nodes.
+"""
+import pandas as pd
+
+
+def placeholder_train_node(training_data: pd.DataFrame, parameters: dict) -> dict:
+    """Placeholder training node — replace with real model training logic.
+
+    Args:
+        training_data: Training dataset registered in the Data Catalog.
+        parameters: Resolved parameters.yml values (test_size, random_state, etc.).
+
+    Returns:
+        A placeholder dict standing in for a trained model artifact.
+    """
+    return {"model": None, "test_size": parameters.get("test_size"), "random_state": parameters.get("random_state")}

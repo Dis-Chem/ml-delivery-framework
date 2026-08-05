@@ -2,6 +2,7 @@
 This pytest configuration was adapted from MLflow:
 https://github.com/mlflow/mlflow/blob/d382b2dd92065a68ea7ab6db16980fc65e1a8dca/conftest.py
 """
+
 import os
 import posixpath
 import pytest

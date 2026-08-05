@@ -1,0 +1,11 @@
+"""Pipeline definition for ``feature_engineering``."""
+from kedro.pipeline import Pipeline
+
+
+def create_pipeline(**kwargs) -> Pipeline:
+    """Create the feature_engineering pipeline.
+
+    Empty by design — add nodes here as the project grows. See nodes.py for the
+    feature-engineering-specific conventions this project follows.
+    """
+    return Pipeline([])

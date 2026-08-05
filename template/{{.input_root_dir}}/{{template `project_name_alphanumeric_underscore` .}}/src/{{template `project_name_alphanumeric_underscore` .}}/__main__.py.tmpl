@@ -1,0 +1,31 @@
+"""Packaged entry point for running this project's pipelines as a Databricks Workflow task.
+
+Built into a wheel by `kedro package` (see pyproject.toml's [project.scripts]) and invoked by the
+DAB python_wheel_task defined in resources/*.yml, e.g.:
+
+    kedro run --pipeline model_training --env staging
+
+Kept intentionally thin: all pipeline logic belongs in src/{{template `project_name_alphanumeric_underscore` .}}/pipelines/,
+not here.
+"""
+import argparse
+
+from kedro.framework.session import KedroSession
+from kedro.framework.startup import bootstrap_project
+from pathlib import Path
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run a {{ .input_project_name }} Kedro pipeline.")
+    parser.add_argument("--pipeline", required=True, help="Registered pipeline name to run.")
+    parser.add_argument("--env", required=True, help="Kedro config environment (base/dev/staging).")
+    args = parser.parse_args()
+
+    project_path = Path(__file__).resolve().parents[2]
+    bootstrap_project(project_path)
+    with KedroSession.create(project_path=project_path, env=args.env) as session:
+        session.run(pipeline_name=args.pipeline)
+
+
+if __name__ == "__main__":
+    main()

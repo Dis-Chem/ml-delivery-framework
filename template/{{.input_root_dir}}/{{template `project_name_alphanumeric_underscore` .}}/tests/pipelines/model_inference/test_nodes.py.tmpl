@@ -1,0 +1,10 @@
+"""Unit tests for the model_inference pipeline's nodes."""
+import pandas as pd
+
+from {{template `project_name_alphanumeric_underscore` .}}.pipelines.model_inference.nodes import placeholder_predict_node
+
+
+def test_placeholder_predict_node_returns_input_unchanged():
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    result = placeholder_predict_node(df, {"registered_model_name": "test_model"})
+    pd.testing.assert_frame_equal(result, df)

@@ -1,0 +1,11 @@
+"""Pipeline definition for ``model_training``."""
+from kedro.pipeline import Pipeline
+
+
+def create_pipeline(**kwargs) -> Pipeline:
+    """Create the model_training pipeline.
+
+    Empty by design — add nodes here as the project grows. See nodes.py for the training-specific
+    conventions this project follows (parameterised experiment/model names, no live run-id passing).
+    """
+    return Pipeline([])

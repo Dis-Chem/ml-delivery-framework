@@ -1,0 +1,12 @@
+"""Unit tests for the feature_engineering pipeline's nodes."""
+import pandas as pd
+
+from {{template `project_name_alphanumeric_underscore` .}}.pipelines.feature_engineering.nodes import (
+    placeholder_compute_features_node,
+)
+
+
+def test_placeholder_compute_features_node_returns_dataframe():
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    result = placeholder_compute_features_node(df, {"feature_table_name": "pickup_features"})
+    pd.testing.assert_frame_equal(result, df)

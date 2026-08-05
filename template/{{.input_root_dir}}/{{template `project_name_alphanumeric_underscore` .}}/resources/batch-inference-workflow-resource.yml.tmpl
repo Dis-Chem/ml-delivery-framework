@@ -8,6 +8,18 @@ resources:
     batch_inference_job:
       name: ${bundle.target}-{{ .input_project_name }}-batch-inference-job
       tasks:
+      {{ if (eq .input_project_skeleton `kedro`) }}
+        - task_key: batch_inference_job
+          environment_key: default
+          python_wheel_task:
+            package_name: {{template `project_name_alphanumeric_underscore` .}}
+            entry_point: {{template `project_name_alphanumeric_underscore` .}}
+            parameters:
+              - "--pipeline"
+              - "model_inference"
+              - "--env"
+              - "${bundle.target}"
+      {{ else }}
         - task_key: batch_inference_job
           environment_key: default
           notebook_task:
@@ -20,13 +32,19 @@ resources:
               model_name: ${var.catalog_name}.{{ .input_schema_name }}.${var.model_name}
               # git source information of current ML resource deployment. It will be persisted as part of the workflow run
               git_source_info: url:${bundle.git.origin_url}; branch:${bundle.git.branch}; commit:${bundle.git.commit}
+      {{ end }}
 
       environments:
         - environment_key: default
           spec:
             environment_version: "5"
             dependencies:
+              {{ if (eq .input_project_skeleton `kedro`) }}
+              # Built by `kedro package` (see the CI/CD workflow's build step) before deploy.
+              - ../dist/{{template `project_name_alphanumeric_underscore` .}}-*.whl
+              {{ else }}
               - -r ../requirements.txt
+              {{ end }}
       schedule:
         quartz_cron_expression: "0 0 11 * * ?" # daily at 11am
         timezone_id: UTC

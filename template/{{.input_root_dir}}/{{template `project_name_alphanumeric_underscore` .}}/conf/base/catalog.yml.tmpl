@@ -1,0 +1,47 @@
+# Kedro Data Catalog — base (shared) entries.
+#
+# All datasets are Unity Catalog Delta tables, never local files — this must hold in every
+# environment. Per-environment catalog names live in conf/<env>/catalog.yml overrides, NOT here;
+# this file only declares which datasets exist and their (env-independent) schema/table names.
+#
+# Medallion layers, for reference (see docs/architecture-decisions.md ADR-06):
+#   bronze (raw)        -> source-shaped, as-ingested
+#   silver (curated/trusted) -> cleaned, conformed, deduplicated
+#   gold (consumption)  -> this project's models/features register here
+#
+# Example bronze entry (commented — uncomment and adapt when a real source exists):
+# raw_events:
+#   type: databricks.ManagedTableDataset
+#   catalog: dev_qa_data_analytics_raw_dev   # overridden per-env in conf/<env>/catalog.yml
+#   schema: {{ .input_schema_name }}
+#   table: raw_events
+
+# Example silver entry (commented):
+# curated_events:
+#   type: databricks.ManagedTableDataset
+#   catalog: dev_qa_data_analytics_trusted_dev   # overridden per-env
+#   schema: {{ .input_schema_name }}
+#   table: curated_events
+
+# Placeholder gold-layer entry actually used by the placeholder nodes in
+# pipelines/data_processing — replace with your real dataset once you have one.
+training_data:
+  type: databricks.ManagedTableDataset
+  catalog: dev_qa_data_analytics_consumption_dev   # overridden per-env in conf/<env>/catalog.yml
+  schema: {{ .input_schema_name }}
+  table: training_data
+
+# Run/model identity flows through the catalog between pipelines — never as a live Python
+# variable. This entry is how model_training hands its run id to model_inference.
+training_run_id:
+  type: json.JSONDataset
+  filepath: data/09_tracking/training_run_id.json
+{{ if (eq .input_include_feature_store `yes`) }}
+# Feature Store table written by feature_engineering and read back by model_training — only
+# present when input_include_feature_store is "yes".
+pickup_features:
+  type: databricks.ManagedTableDataset
+  catalog: dev_qa_data_analytics_consumption_dev   # overridden per-env in conf/<env>/catalog.yml
+  schema: {{ .input_schema_name }}
+  table: pickup_features
+{{ end }}

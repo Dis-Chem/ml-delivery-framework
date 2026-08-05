@@ -1,0 +1,41 @@
+"""Registers this project's pipelines so `kedro run --pipeline <name>` can find them.
+
+Each Databricks Workflow job (see resources/*.yml) runs one of these by name via
+`kedro run --pipeline <name> --env ${bundle.target}`.
+"""
+from kedro.pipeline import Pipeline
+
+from {{template `project_name_alphanumeric_underscore` .}}.pipelines import data_processing, model_inference, model_training
+{{- if (eq .input_include_feature_store `yes`) }}
+from {{template `project_name_alphanumeric_underscore` .}}.pipelines import feature_engineering
+{{- end }}
+
+
+def register_pipelines() -> dict[str, Pipeline]:
+    """Register the project's pipelines.
+
+    Returns:
+        A mapping from pipeline name to a ``Pipeline`` object. ``__default__`` is what
+        `kedro run` uses when no ``--pipeline`` is given.
+    """
+    data_processing_pipeline = data_processing.create_pipeline()
+    model_training_pipeline = model_training.create_pipeline()
+    model_inference_pipeline = model_inference.create_pipeline()
+{{- if (eq .input_include_feature_store `yes`) }}
+    feature_engineering_pipeline = feature_engineering.create_pipeline()
+
+    return {
+        "data_processing": data_processing_pipeline,
+        "feature_engineering": feature_engineering_pipeline,
+        "model_training": model_training_pipeline,
+        "model_inference": model_inference_pipeline,
+        "__default__": data_processing_pipeline + feature_engineering_pipeline + model_training_pipeline,
+    }
+{{- else }}
+    return {
+        "data_processing": data_processing_pipeline,
+        "model_training": model_training_pipeline,
+        "model_inference": model_inference_pipeline,
+        "__default__": data_processing_pipeline + model_training_pipeline,
+    }
+{{- end }}

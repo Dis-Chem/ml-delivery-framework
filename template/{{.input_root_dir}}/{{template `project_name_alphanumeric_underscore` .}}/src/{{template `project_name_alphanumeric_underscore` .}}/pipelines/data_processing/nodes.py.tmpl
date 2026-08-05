@@ -1,0 +1,25 @@
+"""Nodes for the ``data_processing`` pipeline.
+
+Node conventions for this project:
+  - A node is a plain, testable function: typed inputs in, typed outputs out, no I/O of its own.
+  - All I/O goes through the Kedro Data Catalog (conf/base/catalog.yml) — never read/write a
+    table, path, or URL directly inside a node.
+  - Environment-specific values (which catalog, which schema) live in conf/<env>/ overrides,
+    never hardcoded here or passed as literals from this file.
+  - Keep nodes small and named after what they do (a verb), not after the pipeline.
+
+This is a placeholder — replace with real nodes for the data_processing pipeline.
+"""
+import pandas as pd
+
+
+def placeholder_node(input_table: pd.DataFrame) -> pd.DataFrame:
+    """Placeholder node — replace with a real data processing step.
+
+    Args:
+        input_table: A dataset registered in the Data Catalog.
+
+    Returns:
+        The same dataset, unchanged. Replace this body with real logic.
+    """
+    return input_table

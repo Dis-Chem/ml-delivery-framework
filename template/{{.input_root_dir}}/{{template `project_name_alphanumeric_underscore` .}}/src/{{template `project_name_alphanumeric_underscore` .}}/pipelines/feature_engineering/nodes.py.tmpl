@@ -1,0 +1,27 @@
+"""Nodes for the ``feature_engineering`` pipeline.
+
+Node conventions specific to feature engineering:
+  - A node computes a features dataframe from a raw/curated input — no I/O of its own, same as
+    every other pipeline in this project.
+  - The output is registered in the Data Catalog (conf/base/catalog.yml) as a Feature Store
+    table, not returned as a live Python variable — model_training reads it back from the
+    catalog, mirroring how ``training_run_id`` flows between model_training and model_inference.
+  - Only present when ``input_include_feature_store`` is ``yes`` — see
+    template/update_layout.tmpl for the skip logic that removes this pipeline otherwise.
+
+This is a placeholder — replace with real feature computation nodes.
+"""
+import pandas as pd
+
+
+def placeholder_compute_features_node(raw_table: pd.DataFrame, parameters: dict) -> pd.DataFrame:
+    """Placeholder feature computation node — replace with real feature logic.
+
+    Args:
+        raw_table: A raw/curated dataset registered in the Data Catalog.
+        parameters: Resolved parameters.yml values (e.g. feature_table_name).
+
+    Returns:
+        The same dataset, unchanged. Replace this body with real feature transforms.
+    """
+    return raw_table

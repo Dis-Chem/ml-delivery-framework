@@ -2,46 +2,35 @@ import os
 import pathlib
 import pytest
 import json
+import shutil
 import subprocess
 from functools import wraps
 
 RESOURCE_TEMPLATE_ROOT_DIRECTORY = str(pathlib.Path(__file__).parent.parent)
 
-AZURE_DEFAULT_PARAMS = {
+# This template fork is locked to a single stack: Databricks on AWS with
+# GitHub Actions. All test parametrization is scoped to that single stack.
+AWS_DEFAULT_PARAMS = {
     "input_setup_cicd_and_project": "CICD_and_Project",
     "input_root_dir": "my-mlops-project",
     "input_project_name": "my-mlops-project",
-    "input_cloud": "azure",
+    "input_cloud": "aws",
     "input_cicd_platform": "github_actions",
-    "input_databricks_staging_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
-    "input_databricks_prod_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
+    "input_databricks_staging_workspace_host": "https://your-staging-workspace.cloud.databricks.com",
+    "input_databricks_prod_workspace_host": "https://your-prod-workspace.cloud.databricks.com",
     "input_default_branch": "main",
     "input_release_branch": "release",
     "input_read_user_group": "users",
-    "input_include_feature_store": "no",
+    "input_include_feature_store": "yes",
     "input_schema_name": "schema_name",
     "input_unity_catalog_read_user_group": "account users",
     "input_inference_table_name": "dummy.schema.table",
 }
 
-AWS_DEFAULT_PARAMS = {
-    **AZURE_DEFAULT_PARAMS,
-    "input_cloud": "aws",
-    "input_databricks_staging_workspace_host": "https://your-staging-workspace.cloud.databricks.com",
-    "input_databricks_prod_workspace_host": "https://your-prod-workspace.cloud.databricks.com",
-}
-
-GCP_DEFAULT_PARAMS = {
-    **AZURE_DEFAULT_PARAMS,
-    "input_cloud": "gcp",
-    "input_databricks_staging_workspace_host": "https://your-staging-workspace.gcp.databricks.com",
-    "input_databricks_prod_workspace_host": "https://your-prod-workspace.gcp.databricks.com",
-}
-
 
 def parametrize_by_cloud(fn):
     @wraps(fn)
-    @pytest.mark.parametrize("cloud", ["aws", "azure", "gcp"])
+    @pytest.mark.parametrize("cloud", ["aws"])
     def wrapper(*args, **kwargs):
         return fn(*args, **kwargs)
 
@@ -49,13 +38,11 @@ def parametrize_by_cloud(fn):
 
 
 def parametrize_by_project_generation_params(fn):
-    @pytest.mark.parametrize("cloud", ["aws", "azure", "gcp"])
+    @pytest.mark.parametrize("cloud", ["aws"])
     @pytest.mark.parametrize(
         "cicd_platform",
         [
             "github_actions",
-            "github_actions_for_github_enterprise_servers",
-            "azure_devops",
         ],
     )
     @pytest.mark.parametrize(
@@ -93,8 +80,8 @@ def generated_project_dir(
         params.update(
             {
                 "input_cicd_platform": cicd_platform,
-                "input_databricks_staging_workspace_host": "https://adb-3214.67.azuredatabricks.net",
-                "input_databricks_prod_workspace_host": "https://adb-345.89.azuredatabricks.net",
+                "input_databricks_staging_workspace_host": "https://dbc-3214-67.cloud.databricks.com",
+                "input_databricks_prod_workspace_host": "https://dbc-345-89.cloud.databricks.com",
                 "input_default_branch": "main",
                 "input_release_branch": "release",
             }
@@ -124,8 +111,8 @@ def markdown_checker_configs(tmpdir):
     markdown_checker_config_dict = {
         "ignorePatterns": [
             {"pattern": "http://127.0.0.1:5000"},
-            {"pattern": "https://adb-3214.67.azuredatabricks.net*"},
-            {"pattern": "https://adb-345.89.azuredatabricks.net*"},
+            {"pattern": "https://dbc-3214-67.cloud.databricks.com*"},
+            {"pattern": "https://dbc-345-89.cloud.databricks.com*"},
         ],
         "httpHeaders": [
             {
@@ -142,14 +129,10 @@ def markdown_checker_configs(tmpdir):
 
 
 def generate(directory, databricks_cli, context):
-    if context.get("input_cloud") == "aws":
-        default_params = AWS_DEFAULT_PARAMS
-    elif context.get("input_cloud") == "gcp":
-        default_params = GCP_DEFAULT_PARAMS
-    else:
-        default_params = AZURE_DEFAULT_PARAMS
+    # This template is locked to AWS + GitHub Actions, so there is a single
+    # set of default params.
     params = {
-        **default_params,
+        **AWS_DEFAULT_PARAMS,
         **context,
     }
     json_string = json.dumps(params)
@@ -169,6 +152,15 @@ def generate(directory, databricks_cli, context):
 
 @pytest.fixture(scope="session")
 def databricks_cli(tmp_path_factory):
+    # Prefer a Databricks CLI that is already installed on PATH. This avoids a
+    # network download at test time and works in offline/CI environments where
+    # the CLI is provisioned ahead of time.
+    existing_cli = shutil.which("databricks")
+    if existing_cli:
+        yield existing_cli
+        return
+
+    # Fall back to downloading a pinned CLI release via install.sh.
     # create tools dir
     tool_dir = tmp_path_factory.mktemp("tools")
     # copy script and make it executable

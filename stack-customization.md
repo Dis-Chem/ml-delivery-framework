@@ -27,19 +27,17 @@ a generic new stack.
 
 ### (optional) Set up CI
 Tests for MLOps Stacks are defined under the `tests/` directory and are
-executed in CI by Github Actions workflows defined under `.github/`. We encourage you to configure
+executed in CI by GitHub Actions workflows defined under `.github/`. We encourage you to configure
 CI in your own MLOps Stacks repo to ensure it continues to work as you make changes.
-If you use GitHub Actions for CI, the provided workflows should work out of the box.
-Otherwise, you'll need to translate the workflows under `.github/` to the CI provider of your
-choice.
+This template is locked to GitHub Actions, so the provided workflows should work out of the box.
 
 ### Update MLOps Stacks parameters
 Update parameters in your fork as needed in `databricks_template_schema.json` and update corresponding template variable in `library/template_variables.tmpl`. Pruning the set of
 parameters makes it easier for data scientists to start new projects, at the cost of reduced flexibility.
 
 For example, you may have a fixed set of staging & prod Databricks workspaces (or use a single staging & prod workspace), so the
-`input_databricks_staging_workspace_host` and `input_databricks_prod_workspace_host` parameters may be unnecessary. You may
-also run all of your ML pipelines on a single cloud, in which case the `input_cloud` parameter is unnecessary.
+`input_databricks_staging_workspace_host` and `input_databricks_prod_workspace_host` parameters may be unnecessary. Since this
+template is locked to AWS, the `input_cloud` parameter is likewise unnecessary.
 
 The easiest way to prune parameters and replace them with hardcoded values is to follow
 the [contributor guide](README.md#previewing-changes) to generate an example project with

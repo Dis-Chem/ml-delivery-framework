@@ -1,0 +1,11 @@
+"""Unit tests for the model_training pipeline's nodes."""
+import pandas as pd
+
+from {{template `project_name_alphanumeric_underscore` .}}.pipelines.model_training.nodes import placeholder_train_node
+
+
+def test_placeholder_train_node_uses_parameters():
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    result = placeholder_train_node(df, {"test_size": 0.2, "random_state": 42})
+    assert result["test_size"] == 0.2
+    assert result["random_state"] == 42

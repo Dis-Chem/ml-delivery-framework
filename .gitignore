@@ -13,3 +13,6 @@ __pycache__/
 .cache
 *.pyc
 mlops-stacks.iml
+
+# local smoke-test / scratch output
+tmp/

@@ -28,20 +28,10 @@ DEFAULT_PARAM_VALUES = {
     "input_unity_catalog_read_user_group": "account users",
     "input_inference_table_name": "dummy.schema.table",
 }
-DEFAULT_PARAMS_AZURE = {
-    "input_cloud": "azure",
-    "input_databricks_staging_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
-    "input_databricks_prod_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
-}
 DEFAULT_PARAMS_AWS = {
     "input_cloud": "aws",
     "input_databricks_staging_workspace_host": "https://your-staging-workspace.cloud.databricks.com",
     "input_databricks_prod_workspace_host": "https://your-prod-workspace.cloud.databricks.com",
-}
-DEFAULT_PARAMS_GCP = {
-    "input_cloud": "gcp",
-    "input_databricks_staging_workspace_host": "https://your-staging-workspace.gcp.databricks.com",
-    "input_databricks_prod_workspace_host": "https://your-prod-workspace.gcp.databricks.com",
 }
 
 
@@ -180,20 +170,21 @@ def test_generate_project_with_default_values(
         "input_root_dir": TEST_PROJECT_NAME,
         "input_cloud": cloud,
         "input_cicd_platform": cicd_platform,
+        # Pin this explicitly rather than relying on utils.AWS_DEFAULT_PARAMS's fallback value
+        # (which other tests rely on being "yes") — this test asserts the *documented* default
+        # values below, so it must control this input itself.
+        "input_include_feature_store": DEFAULT_PARAM_VALUES[
+            "input_include_feature_store"
+        ],
     }
-    # Testing that Azure is the default option.
-    if cloud == "azure":
+    # Testing that AWS is the default option (the template is locked to AWS).
+    if cloud == "aws":
         del context["input_cloud"]
     generate(tmpdir, databricks_cli, context=context)
     test_file_contents = (
         tmpdir / TEST_PROJECT_NAME / "_params_testing_only.txt"
     ).read_text("utf-8")
-    if cloud == "azure":
-        params = {**DEFAULT_PARAM_VALUES, **DEFAULT_PARAMS_AZURE}
-    elif cloud == "aws":
-        params = {**DEFAULT_PARAM_VALUES, **DEFAULT_PARAMS_AWS}
-    elif cloud == "gcp":
-        params = {**DEFAULT_PARAM_VALUES, **DEFAULT_PARAMS_GCP}
+    params = {**DEFAULT_PARAM_VALUES, **DEFAULT_PARAMS_AWS}
     for param, value in params.items():
         assert f"{param}={value}" in test_file_contents
 
@@ -244,6 +235,7 @@ def test_generate_project_check_delta_output(
         assert not os.path.isfile(delta_notebook_path)
 
 
+@pytest.mark.parametrize("project_skeleton", ["mlops_stacks_native", "kedro"])
 @parametrize_by_project_generation_params
 def test_generate_project_check_feature_store_output(
     tmpdir,
@@ -252,9 +244,11 @@ def test_generate_project_check_feature_store_output(
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
+    project_skeleton,
 ):
     """
-    Asserts the behavior of feature store-related artifacts when generating MLOps Stacks.
+    Asserts the behavior of feature store-related artifacts when generating MLOps Stacks, for
+    both the mlops_stacks_native and kedro project skeletons.
     """
     context = prepareContext(
         cloud,
@@ -262,18 +256,78 @@ def test_generate_project_check_feature_store_output(
         setup_cicd_and_project,
         include_feature_store,
     )
+    context["input_project_skeleton"] = project_skeleton
     generate(tmpdir, databricks_cli, context=context)
-    fs_notebook_path = (
-        tmpdir
-        / TEST_PROJECT_NAME
-        / TEST_PROJECT_DIRECTORY
-        / "feature_engineering"
-        / "GenerateAndWriteFeatures.py"
-    )
-    if setup_cicd_and_project != "CICD_Only" and include_feature_store == "yes":
-        assert os.path.isfile(fs_notebook_path)
+    project_dir = tmpdir / TEST_PROJECT_NAME / TEST_PROJECT_DIRECTORY
+
+    if project_skeleton == "kedro":
+        fs_pipeline_path = (
+            project_dir
+            / "src"
+            / TEST_PROJECT_DIRECTORY
+            / "pipelines"
+            / "feature_engineering"
+            / "nodes.py"
+        )
+        if setup_cicd_and_project != "CICD_Only" and include_feature_store == "yes":
+            assert os.path.isfile(fs_pipeline_path)
+        else:
+            assert not os.path.isfile(fs_pipeline_path)
     else:
-        assert not os.path.isfile(fs_notebook_path)
+        fs_notebook_path = (
+            project_dir / "feature_engineering" / "GenerateAndWriteFeatures.py"
+        )
+        if setup_cicd_and_project != "CICD_Only" and include_feature_store == "yes":
+            assert os.path.isfile(fs_notebook_path)
+        else:
+            assert not os.path.isfile(fs_notebook_path)
+
+
+@pytest.mark.parametrize("project_skeleton", ["mlops_stacks_native", "kedro"])
+def test_generate_project_skeleton_flavor(tmpdir, databricks_cli, project_skeleton):
+    """
+    The mlops_stacks_native (default) and kedro project skeletons are mutually exclusive: each
+    flavor's generated project must contain its own tree and omit the other's entirely.
+    """
+    context = {
+        "input_setup_cicd_and_project": "Project_Only",
+        "input_project_name": TEST_PROJECT_NAME,
+        "input_root_dir": TEST_PROJECT_NAME,
+        "input_project_skeleton": project_skeleton,
+    }
+    generate(tmpdir, databricks_cli, context=context)
+    project_dir = tmpdir / TEST_PROJECT_NAME / TEST_PROJECT_DIRECTORY
+
+    native_only_paths = [
+        "training",
+        "deployment",
+        "validation",
+        "monitoring",
+        "requirements.txt",
+    ]
+    kedro_only_paths = ["src", "conf", "pyproject.toml", "notebooks"]
+
+    if project_skeleton == "kedro":
+        for p in kedro_only_paths:
+            assert os.path.exists(
+                project_dir / p
+            ), f"expected {p} to exist for kedro skeleton"
+        for p in native_only_paths:
+            assert not os.path.exists(
+                project_dir / p
+            ), f"expected {p} to be absent for kedro skeleton"
+        assert os.path.isfile(
+            project_dir / "src" / TEST_PROJECT_DIRECTORY / "pipeline_registry.py"
+        )
+    else:
+        for p in native_only_paths:
+            assert os.path.exists(
+                project_dir / p
+            ), f"expected {p} to exist for native skeleton"
+        for p in kedro_only_paths:
+            assert not os.path.exists(
+                project_dir / p
+            ), f"expected {p} to be absent for native skeleton"
 
 
 @pytest.mark.parametrize(
@@ -291,8 +345,6 @@ def test_workspace_dir_strip_query_params(
 ):
     workspace_host = {
         "aws": "https://dbc-my-aws-workspace.cloud.databricks.com",
-        "azure": "https://adb-mycoolworkspace.11.azuredatabricks.net",
-        "gcp": "https://dbc-my-gcp-workspace.gcp.databricks.com",
     }[cloud]
     workspace_url = f"{workspace_host}{workspace_url_suffix}"
     context = {

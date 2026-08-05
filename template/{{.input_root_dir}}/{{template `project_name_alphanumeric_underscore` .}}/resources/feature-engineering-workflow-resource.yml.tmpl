@@ -8,6 +8,18 @@ resources:
     write_feature_table_job:
       name: ${bundle.target}-{{ .input_project_name }}-write-feature-table-job
       tasks:
+      {{ if (eq .input_project_skeleton `kedro`) }}
+        - task_key: WriteFeatureTable
+          environment_key: default
+          python_wheel_task:
+            package_name: {{template `project_name_alphanumeric_underscore` .}}
+            entry_point: {{template `project_name_alphanumeric_underscore` .}}
+            parameters:
+              - "--pipeline"
+              - "feature_engineering"
+              - "--env"
+              - "${bundle.target}"
+      {{ else }}
         - task_key: PickupFeatures
           environment_key: default
           notebook_task:
@@ -40,12 +52,18 @@ resources:
               primary_keys: zip
               # git source information of current ML resource deployment. It will be persisted as part of the workflow run
               git_source_info: url:${bundle.git.origin_url}; branch:${bundle.git.branch}; commit:${bundle.git.commit}
+      {{ end }}
       environments:
         - environment_key: default
           spec:
             environment_version: "5"
             dependencies:
-              - -r "../requirements.txt"
+              {{ if (eq .input_project_skeleton `kedro`) }}
+              # Built by `kedro package` (see the CI/CD workflow's build step) before deploy.
+              - ../dist/{{template `project_name_alphanumeric_underscore` .}}-*.whl
+              {{ else }}
+              - -r ../requirements.txt
+              {{ end }}
       schedule:
         quartz_cron_expression: "0 0 7 * * ?" # daily at 7am
         timezone_id: UTC

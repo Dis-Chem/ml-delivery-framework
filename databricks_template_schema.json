@@ -1,21 +1,22 @@
 {
-  "welcome_message": "Welcome to MLOps Stacks. For detailed information on project generation, see the README at https://github.com/databricks/mlops-stacks/blob/main/README.md.",
+  "welcome_message": "Welcome to the X, bigly labs ML Delivery Framework. For detailed information on project generation, see the README at ",
   "min_databricks_cli_version": "v0.236.0",
   "properties": {
     "input_setup_cicd_and_project": {
       "order": 1,
       "type": "string",
-      "description": "{{if false}}\n\nERROR: This template is not supported by your current Databricks CLI version.\nPlease hit control-C and go to https://docs.databricks.com/en/dev-tools/cli/install.html for instructions on upgrading the CLI to the minimum version supported by MLOps Stacks.\n\n\n{{end}}\nSelect if both CI/CD and the Project should be set up, or only one of them.\nYou can always set up the other later by running initialization again",
-      "default": "CICD_and_Project",
-      "enum": ["CICD_and_Project", "Project_Only", "CICD_Only"]
+      "description": "{{if false}}\n\nERROR: This template is not supported by your current Databricks CLI version.\nPlease hit control-C and go to https://docs.databricks.com/en/dev-tools/cli/install.html for instructions on upgrading the CLI to the minimum version supported by MLOps Stacks.\n\n\n{{end}}\nSetup mode. ENFORCED to `Project_Only` (constant, not prompted) so new projects created inside the\nmonorepo only ever scaffold squad code under domains/<tribe>/<squad>.\n\nThe other modes stay available for override via --config-file only, they are not offered interactively:\n  - `Project_Only`      : (enforced default) scaffold squad code, no CI/CD. What data scientists use.\n  - `CICD_and_Project`  : project + CI/CD in one dir. Standalone-repo layout; avoid inside the monorepo\n                          (its .github would land under the squad path, where GitHub Actions won't run it).\n  - `CICD_Only`         : generate only the CI/CD workflows. Optional escape hatch for a squad that wants\n                          fully independent per-project workflows outside the shared deployment-repo kit\n                          (the primary CI/CD path — see docs/architecture-decisions.md ADR-15/ADR-16).",
+      "default": "Project_Only",
+      "enum": ["CICD_and_Project", "Project_Only", "CICD_Only"],
+      "skip_prompt_if": {}
     },
-    "input_project_name": {
+    "input_tribe": {
       "order": 2,
       "type": "string",
-      "default": "my_mlops_project",
-      "description": "\nProject Name. Default",
-      "pattern": "^[^ .\\\\/]{3,}$",
-      "pattern_match_failure_message": "Project name must be at least 3 characters long and cannot contain the following characters: \"\\\", \"/\", \" \" and \".\".",
+      "default": "example_tribe",
+      "description": "\nTribe (business-aligned team) that owns this project, e.g. cdi. The default is a generic\nplaceholder — set your real tribe. Drives the monorepo path domains/<tribe>/<squad>, the UC\nschema, model name, and the Tribe tag.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "pattern_match_failure_message": "Tribe must be lower_snake_case: start with a letter and use only lowercase letters, digits and underscores.",
       "skip_prompt_if": {
         "properties": {
           "input_setup_cicd_and_project": {
@@ -24,11 +25,56 @@
         }
       }
     },
-    "input_root_dir": {
+    "input_squad": {
       "order": 3,
       "type": "string",
-      "default": "{{ .input_project_name }}",
-      "description": "\nRoot directory name.\nFor monorepos, name of the root directory that contains all the projects.\nDefault",
+      "default": "example_squad",
+      "description": "\nSquad (delivery unit within the tribe) that owns this project, e.g. promo.\nDrives the monorepo path domains/<tribe>/<squad>, the UC schema, model name, and the Squad tag.\nDefault",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "pattern_match_failure_message": "Squad must be lower_snake_case: start with a letter and use only lowercase letters, digits and underscores.",
+      "skip_prompt_if": {
+        "properties": {
+          "input_setup_cicd_and_project": {
+            "const": "CICD_Only"
+          }
+        }
+      }
+    },
+    "input_domain": {
+      "order": 4,
+      "type": "string",
+      "default": "example_domain",
+      "description": "\nData/analytics domain this project is about, e.g. sales, customer. A domain typically contains\nseveral tribes (domain is the broader org grouping; tribe is a team within it). The default is a\ngeneric placeholder — set your real domain. Applied as the Domain tag so assets are discoverable\nby domain even though the repo path stays team-first (tribe/squad only — domain is metadata, not\na folder level).\nDefault",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "pattern_match_failure_message": "Domain must be lower_snake_case: start with a letter and use only lowercase letters, digits and underscores.",
+      "skip_prompt_if": {
+        "properties": {
+          "input_setup_cicd_and_project": {
+            "const": "CICD_Only"
+          }
+        }
+      }
+    },
+    "input_project_name": {
+      "order": 5,
+      "type": "string",
+      "default": "{{ .input_tribe }}_{{ .input_squad }}",
+      "description": "\nProject name (identity key). Derived as <tribe>_<squad> and not prompted, so the identity\nstays consistent across repo path, UC schema, model, experiment, and tags.\nDefault",
+      "pattern": "^[^ .\\\\/]{3,}$",
+      "pattern_match_failure_message": "Project name must be at least 3 characters long and cannot contain the following characters: \"\\\", \"/\", \" \" and \".\".",
+      "skip_prompt_if": {
+        "anyOf": [
+          {"properties": {"input_setup_cicd_and_project": {"const": "CICD_and_Project"}}},
+          {"properties": {"input_setup_cicd_and_project": {"const": "Project_Only"}}},
+          {"properties": {"input_setup_cicd_and_project": {"const": "CICD_Only"}}}
+        ]
+      }
+    },
+    "input_root_dir": {
+      "order": 6,
+      "type": "string",
+      "default": "domains/{{ .input_tribe }}/{{ .input_squad }}",
+      "description": "\nRoot directory for this project inside the monorepo. Enforced to domains/<tribe>/<squad>\nso new projects always land in the team/squad structure.\nDefault",
       "skip_prompt_if": {
         "properties": {
           "input_setup_cicd_and_project": {
@@ -38,18 +84,40 @@
       }
     },
     "input_cloud": {
-      "order": 4,
+      "order": 7,
       "type": "string",
-      "description": "\nSelect cloud",
-      "default": "azure",
-      "enum": ["azure", "aws", "gcp"]
+      "description": "\nCloud provider (locked to AWS for this template)",
+      "default": "aws",
+      "enum": ["aws"],
+      "skip_prompt_if": {
+        "anyOf": [
+          {"properties": {"input_setup_cicd_and_project": {"const": "CICD_and_Project"}}},
+          {"properties": {"input_setup_cicd_and_project": {"const": "Project_Only"}}},
+          {"properties": {"input_setup_cicd_and_project": {"const": "CICD_Only"}}}
+        ]
+      }
     },
     "input_cicd_platform": {
-      "order": 5,
+      "order": 8,
       "type": "string",
-      "description": "\nSelect CICD platform",
+      "description": "\nCI/CD platform (locked to GitHub Actions for this template)",
       "default": "github_actions",
-      "enum": ["github_actions", "github_actions_for_github_enterprise_servers", "azure_devops", "gitlab"],
+      "enum": ["github_actions"],
+      "skip_prompt_if": {
+        "anyOf": [
+          {"properties": {"input_setup_cicd_and_project": {"const": "CICD_and_Project"}}},
+          {"properties": {"input_setup_cicd_and_project": {"const": "Project_Only"}}},
+          {"properties": {"input_setup_cicd_and_project": {"const": "CICD_Only"}}}
+        ]
+      }
+    },
+    "input_databricks_dev_workspace_host": {
+      "order": 9,
+      "type": "string",
+      "default": "https://dbc-26cf5e15-d40d.cloud.databricks.com",
+      "description": "\nURL of the dev_qa Databricks workspace (its own separate workspace — not shared with UAT or prod).\nMapped to the bundle `dev` target.\nDefault",
+      "pattern": "^(https.*)?$",
+      "pattern_match_failure_message": "Databricks dev_qa workspace host URLs must start with https. Got invalid workspace host.",
       "skip_prompt_if": {
         "properties": {
           "input_setup_cicd_and_project": {
@@ -59,10 +127,10 @@
       }
     },
     "input_databricks_staging_workspace_host": {
-      "order": 6,
+      "order": 10,
       "type": "string",
-      "default": "{{if eq .input_cloud `azure`}}https://adb-xxxx.xx.azuredatabricks.net{{else if eq .input_cloud `aws`}}https://your-staging-workspace.cloud.databricks.com{{else if eq .input_cloud `gcp`}}https://your-staging-workspace.gcp.databricks.com{{end}}",
-      "description": "\nURL of staging Databricks workspace,\nIt will run PR CI and preview changes before they're deployed to production.\nDefault",
+      "default": "https://dbc-9f6e09b3-ca38.cloud.databricks.com",
+      "description": "\nURL of the UAT Databricks workspace (its own separate workspace — not shared with dev_qa or prod).\nMapped to the bundle `staging` target.\nDefault",
       "pattern": "^(https.*)?$",
       "pattern_match_failure_message": "Databricks staging workspace host URLs must start with https. Got invalid workspace host.",
       "skip_prompt_if": {
@@ -74,10 +142,10 @@
       }
     },
     "input_databricks_prod_workspace_host": {
-      "order": 7,
+      "order": 11,
       "type": "string",
-      "default": "{{if eq .input_cloud `azure`}}https://adb-xxxx.xx.azuredatabricks.net{{else if eq .input_cloud `aws`}}https://your-prod-workspace.cloud.databricks.com{{else if eq .input_cloud `gcp`}}https://your-prod-workspace.gcp.databricks.com{{end}}",
-      "description": "\nURL of production Databricks workspace.\nDefault",
+      "default": "https://dbc-cd0b5c83-b24b.cloud.databricks.com",
+      "description": "\nURL of the production Databricks workspace. Mapped to the bundle `prod` target.\nNot used during the dev_qa-only PoC; kept here so prod can be enabled later.\nDefault",
       "pattern": "^(https.*)?$",
       "pattern_match_failure_message": "Databricks production workspace host URLs must start with https. Got invalid workspace host.",
       "skip_prompt_if": {
@@ -89,7 +157,7 @@
       }
     },
     "input_default_branch": {
-      "order": 8,
+      "order": 12,
       "type": "string",
       "default": "main",
       "description": "\nName of the default branch,\nStaging resources are deployed from this branch and stages the latest ML code.\nDefault",
@@ -102,7 +170,7 @@
       }
     },
     "input_release_branch": {
-      "order": 9,
+      "order": 13,
       "type": "string",
       "default": "release",
       "description": "\nName of the release branch.\nThe training and other production jobs pull ML code from this branch.\nDefault",
@@ -115,7 +183,7 @@
       }
     },
     "input_read_user_group": {
-      "order": 10,
+      "order": 14,
       "type": "string",
       "default": "users",
       "description": "\nUser group name to give READ permissions to for project resources\n(ML jobs, integration test job runs, and machine learning resources).\nA group with this name must exist in both the staging and prod workspaces.\nDefault",
@@ -128,10 +196,10 @@
       }
     },
     "input_staging_catalog_name": {
-      "order": 12,
+      "order": 15,
       "type": "string",
-      "description": "\nName of the catalog in Unity Catalog that will host the staging UC resources. \nThis catalog must already exist and service principals must have access to it.\nDefault",
-      "default": "staging",
+      "description": "\nName of the Unity Catalog for the UAT environment (mapped to the `staging` target).\nConsumption/Gold layer per the org medallion guide. Confirm the real UAT catalog name. Must exist with SP access.\nDefault",
+      "default": "uat_data_analytics",
       "skip_prompt_if": {
         "properties": {
           "input_setup_cicd_and_project": {
@@ -141,10 +209,10 @@
       }
     },
     "input_prod_catalog_name": {
-      "order": 13,
+      "order": 16,
       "type": "string",
-      "description": "\nName of the catalog in Unity Catalog that will host the production UC resources.\nThis catalog must already exist and service principals must have access to it.\nDefault",
-      "default": "prod",
+      "description": "\nName of the Unity Catalog for the production environment (mapped to the `prod` target).\nDormant until prod is enabled — confirm the real prod consumption catalog name first.\nDefault",
+      "default": "prod_data_analytics",
       "skip_prompt_if": {
         "properties": {
           "input_setup_cicd_and_project": {
@@ -154,10 +222,10 @@
       }
     },
     "input_test_catalog_name": {
-      "order": 14,
+      "order": 17,
       "type": "string",
-      "description": "\nName of the catalog in Unity Catalog that will be used for integration tests.\nThis catalog must already exist and service principals must have access to it.\nDefault",
-      "default": "test",
+      "description": "\nName of the Unity Catalog used for integration tests. Runs in dev_qa during the PoC.\nMust already exist with SP access.\nDefault",
+      "default": "dev_qa_data_analytics",
       "skip_prompt_if": {
         "properties": {
           "input_setup_cicd_and_project": {
@@ -167,22 +235,22 @@
       }
     },
     "input_schema_name": {
-      "order": 15,
+      "order": 18,
       "type": "string",
-      "description": "\nName of schema to use when registering a model in Unity Catalog.\nThis schema must already exist and service principals must have access.\nWe recommend using the project name.\nDefault",
-      "default": "{{ .input_project_name }}",
+      "description": "\nUnity Catalog schema for registering models, feature tables, and experiments.\nEnforced to <tribe>_<squad> so the schema matches the project identity. Must already exist with SP access.\nDefault",
+      "default": "{{ .input_tribe }}_{{ .input_squad }}",
       "pattern": "^[^ .\\-\\/]*$",
       "pattern_match_failure_message": "Valid schema names cannot contain any of the following characters: \" \", \".\", \"-\", \"\\\", \"/\"",
       "skip_prompt_if": {
-        "properties": {
-          "input_setup_cicd_and_project": {
-            "const": "CICD_Only"
-          }
-        }
+        "anyOf": [
+          {"properties": {"input_setup_cicd_and_project": {"const": "CICD_and_Project"}}},
+          {"properties": {"input_setup_cicd_and_project": {"const": "Project_Only"}}},
+          {"properties": {"input_setup_cicd_and_project": {"const": "CICD_Only"}}}
+        ]
       }
     },
     "input_unity_catalog_read_user_group": {
-      "order": 16,
+      "order": 19,
       "type": "string",
       "default": "account users",
       "description": "\nUser group name to give EXECUTE privileges to models in Unity Catalog (UC).\nIt must exist in UC with access granted to the staging and prod workspaces.\nDefault",
@@ -195,10 +263,10 @@
       }
     },
     "input_inference_table_name": {
-      "order": 17,
+      "order": 20,
       "type": "string",
       "description": "\nFully qualified name of inference table to attach monitoring to.\nThis table must already exist and service principals must have access.",
-      "default": "dev.{{ .input_project_name }}.predictions",
+      "default": "dev_qa_data_analytics.{{ .input_tribe }}_{{ .input_squad }}.predictions",
       "pattern": "^[^ .\\-\\/]+(\\.[^ .\\-\\/]+){2}$",
       "pattern_match_failure_message": "Fully qualified Unity Catalog table names must have catalog, schema, and table separated by \".\" and each cannot contain any of the following characters: \" \", \".\", \"-\", \"\\\", \"/\"",
       "skip_prompt_if": {
@@ -210,7 +278,7 @@
       }
     },
     "input_include_feature_store": {
-      "order": 18,
+      "order": 21,
       "type": "string",
       "description": "\nWhether to include Feature Store",
       "default": "no",
@@ -223,44 +291,20 @@
         }
       }
     },
-    "input_docker_image": {
-      "order": 20,
+    "input_project_skeleton": {
+      "order": 22,
       "type": "string",
-      "description": "\nDocker image for the execution of Gitlab pipelines",
-      "default": "databricksfieldeng/mlopsstacks:latest",
+      "description": "\nProject skeleton to scaffold.\n  - `mlops_stacks_native` (default): the standard training/deployment/validation/monitoring\n    layout used throughout this template.\n  - `kedro`: a Kedro pipeline project (src/<project>/pipelines/{data_processing,model_training,\n    model_inference}, conf/, pyproject.toml) instead. Jobs run via a python_wheel_task calling\n    `kedro run` rather than notebook_task. input_include_feature_store is honored by both\n    flavors: kedro gets a feature_engineering Kedro pipeline plus matching catalog/parameters\n    entries instead of native's feature engineering notebooks.\nDefault",
+      "default": "mlops_stacks_native",
+      "enum": ["mlops_stacks_native", "kedro"],
       "skip_prompt_if": {
-        "anyOf":[
-          {
-            "properties": {
-              "input_cicd_platform": {
-                "const": "github_actions"
-              }
-            }
-          },
-          {
-            "properties": {
-              "input_cicd_platform": {
-                "const": "github_actions_for_github_enterprise_servers"
-              }
-            }
-          },
-          {
-            "properties": {
-              "input_cicd_platform": {
-                "const": "azure_devops"
-              }
-            }
-          },
-          {
-            "properties": {
-              "input_setup_cicd_and_project": {
-                "const": "Project_Only"
-              }
-            }
+        "properties": {
+          "input_setup_cicd_and_project": {
+            "const": "CICD_Only"
           }
-        ]
+        }
       }
     }
   },
-  "success_message" : "\n*** Your MLOps Stack has been created in the '{{.input_root_dir}}{{if not (eq .input_setup_cicd_and_project `CICD_Only`) }}/{{.input_project_name}}{{end}}' directory! ***\n\nPlease refer to the README.md for further instructions on getting started."
+  "success_message" : "\n*** Your ML Delivery Framework project has been created in the '{{.input_root_dir}}{{if not (eq .input_setup_cicd_and_project `CICD_Only`) }}/{{.input_project_name}}{{end}}' directory! ***\n\nPlease refer to the README.md for further instructions on getting started."
 }

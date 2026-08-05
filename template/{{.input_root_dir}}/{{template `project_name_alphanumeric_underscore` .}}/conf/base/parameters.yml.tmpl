@@ -1,0 +1,20 @@
+# Shared parameters. Nothing environment-specific belongs here — see conf/dev/, conf/staging/
+# for per-environment overrides of these same keys.
+
+test_size: 0.2
+random_state: 42
+
+# MLflow experiment path — always read this from here, never call mlflow.set_experiment()
+# with a hardcoded or personal user path. This base value is a placeholder; conf/dev/ and
+# conf/staging/ override it with the real per-environment path (Kedro config, not DAB — this
+# file cannot use ${bundle.target}-style substitution).
+experiment_name: /Shared/{{ .input_project_name }}/base
+
+# Unity Catalog registered model name — training registers to this name; inference always loads
+# models:/<registered_model_name>/latest (or a promotion alias), never runs:/<run_id>/...
+registered_model_name: {{ .input_schema_name }}.{{ template `model_name` . }}
+{{ if (eq .input_include_feature_store `yes`) }}
+# Feature Store table name — feature_engineering writes to this catalog entry, model_training
+# reads it back. Only present when input_include_feature_store is "yes".
+feature_table_name: pickup_features
+{{ end }}

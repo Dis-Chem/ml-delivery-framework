@@ -122,6 +122,20 @@ the feature engineering pipelines.
 We expect most of the development to take place in the `feature_engineering` folder.
 
 {{ end }}
+{{ if (and (eq .input_project_skeleton `kedro`) (eq .input_include_feature_store `yes`)) }}
+## Configure your ML pipeline (kedro)
+
+With the kedro skeleton, feature computation lives in the `feature_engineering` Kedro pipeline
+(`src/{{template `project_name_alphanumeric_underscore` .}}/pipelines/feature_engineering`), not a
+notebook. It's registered in `pipeline_registry.py` and runs on its own schedule via
+`resources/feature-engineering-workflow-resource.yml`'s `write_feature_table_job` (a
+`python_wheel_task` calling `kedro run --pipeline feature_engineering --env ${bundle.target}`).
+Its output is a Feature Store table declared in `conf/base/catalog.yml`; `model_training` reads
+that same catalog entry rather than recomputing features itself. Implement your feature logic in
+`pipelines/feature_engineering/nodes.py` and add unit tests under
+`tests/pipelines/feature_engineering`.
+
+{{ end }}
 ## Iterating on ML code
 
 ### Deploy ML code and resources to dev workspace using Bundles

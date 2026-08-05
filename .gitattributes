@@ -1,0 +1,4 @@
+# Strip Jupyter notebook outputs on commit so diffs stay clean and no data leaks.
+# One-time local setup after cloning:  pip install nbstripout && nbstripout --install
+*.ipynb filter=nbstripout
+*.ipynb diff=ipynb

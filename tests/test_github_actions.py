@@ -65,9 +65,7 @@ def _install_actionlint(dest_dir):
     return binary
 
 
-@pytest.mark.parametrize(
-    "cicd_platform", ["github_actions", "github_actions_for_github_enterprise_servers"]
-)
+@pytest.mark.parametrize("cicd_platform", ["github_actions"])
 @pytest.mark.parametrize(
     "setup_cicd_and_project,include_feature_store",
     [
@@ -96,9 +94,7 @@ def test_generated_yaml_format(cloud, generated_project_dir):
 
 
 @pytest.mark.large
-@pytest.mark.parametrize(
-    "cicd_platform", ["github_actions", "github_actions_for_github_enterprise_servers"]
-)
+@pytest.mark.parametrize("cicd_platform", ["github_actions"])
 @pytest.mark.parametrize(
     "setup_cicd_and_project,include_feature_store",
     [

@@ -14,6 +14,47 @@ variables:
     default: {{template `model_name` .}}
   catalog_name:
     description: The catalog name to save the trained model
+  # Governance tags — applied to all taggable resources via `presets.tags` below.
+  # tribe/squad/domain come from the template inputs; fill the remaining TODO placeholders.
+  company:
+    description: Company tag.
+    default: xbl
+  tribe:
+    description: Tribe/team tag.
+    default: {{ .input_tribe }}
+  squad:
+    description: Squad tag.
+    default: {{ .input_squad }}
+  domain:
+    description: Data/analytics domain tag (enables domain-based discovery).
+    default: {{ .input_domain }}
+  purpose:
+    description: Purpose tag.
+    default: {{ .input_project_name }}
+  owner_team:
+    description: Owning team tag.
+    default: TODO_owner_team
+  cost_center:
+    description: Cost center tag.
+    default: TODO_cost_center
+  data_class:
+    description: Data classification tag.
+    default: TODO_data_class
+
+# Governance tags applied to every resource in the bundle that supports tags
+# (jobs, etc.). Environment is derived from the deployment target.
+presets:
+  tags:
+    Company: ${var.company}
+    Tribe: ${var.tribe}
+    Squad: ${var.squad}
+    Domain: ${var.domain}
+    Environment: ${bundle.target}
+    Purpose: ${var.purpose}
+    ManagedBy: databricks_asset_bundle
+    OwnerTeam: ${var.owner_team}
+    CostCenter: ${var.cost_center}
+    DataClass: ${var.data_class}
 
 include:
   # Resources folder contains ML artifact resources for the ML project that defines model and experiment
@@ -28,31 +69,40 @@ include:
   # TODO: uncomment once monitoring inference table has been created
   # - ./resources/monitoring-resource.yml
 
-# Deployment Target specific values for workspace
+# Deployment targets. Environment mapping: dev -> dev_qa workspace, staging -> UAT workspace,
+# prod -> prod workspace. All three are separate Databricks workspaces.
 targets:
-  dev:  # UC Catalog Name
-    mode: development
+  # dev -> dev_qa environment (its own dedicated workspace). CI deploys here on merge to the
+  # `dev` branch, into a SHARED folder (not per-user). Personal iteration happens in the
+  # Databricks console; this target is the shared, git-sourced dev deployment.
+  # NOTE: deliberately no `mode: development` — that preset requires a user-scoped root_path
+  # (auto-namespaced per deployer), which is incompatible with a shared, CI-deployed target.
+  dev:
     default: true
     variables:
-      catalog_name: dev
+      catalog_name: dev_qa_data_analytics_consumption_dev
     workspace:
-      # TODO: add dev workspace URL
-      host:
+      host: {{template `databricks_dev_workspace_host` .}}
+      # Shared deployment root (not the per-user home) so the whole squad sees the same dev deploy.
+      root_path: /Workspace/Shared/mlops/${bundle.name}/dev
 
 {{- if (eq .input_setup_cicd_and_project `CICD_and_Project`)}}
 
+  # staging -> UAT environment. Shared target that CI/CD deploys to.
   staging:
     variables:
       catalog_name: {{ .input_staging_catalog_name }}
     workspace:
       host: {{template `databricks_staging_workspace_host` .}}
 
+  # prod -> prod environment. Dormant until prod OIDC + the real prod catalog are configured.
   prod:
     variables:
       catalog_name: {{ .input_prod_catalog_name }}
     workspace:
       host: {{template `databricks_prod_workspace_host` .}}
 
+  # test -> integration tests. Runs in the UAT workspace.
   test:
     variables:
       catalog_name: {{ .input_test_catalog_name }}

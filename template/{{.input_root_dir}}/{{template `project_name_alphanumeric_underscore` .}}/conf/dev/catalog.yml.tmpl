@@ -1,0 +1,7 @@
+# dev_qa environment overrides — only the catalog changes; dataset shape stays defined in
+# conf/base/catalog.yml.
+training_data:
+  type: databricks.ManagedTableDataset
+  catalog: dev_qa_data_analytics_consumption_dev
+  schema: {{ .input_schema_name }}
+  table: training_data

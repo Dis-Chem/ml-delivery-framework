@@ -1,0 +1,26 @@
+"""Nodes for the ``model_inference`` pipeline.
+
+Conventions specific to inference:
+  - Always load the model from the Unity Catalog registry alias, e.g.
+    ``models:/<registered_model_name>/latest`` (or a promotion alias like ``@champion``) —
+    never from ``runs:/<run_id>/...``. The registry is the interface between training and
+    inference, not a specific training run.
+  - ``registered_model_name`` comes from parameters.yml — never hardcode a model name here.
+
+This is a placeholder — replace with real inference nodes.
+"""
+import pandas as pd
+
+
+def placeholder_predict_node(input_data: pd.DataFrame, parameters: dict) -> pd.DataFrame:
+    """Placeholder inference node — replace with real batch/online inference logic.
+
+    Args:
+        input_data: Inference input dataset registered in the Data Catalog.
+        parameters: Resolved parameters.yml values (registered_model_name, etc.).
+
+    Returns:
+        The input data, unchanged. Replace this body with a real
+        ``models:/<parameters["registered_model_name"]>/latest`` prediction call.
+    """
+    return input_data
