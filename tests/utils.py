@@ -5,13 +5,10 @@ import json
 import subprocess
 from functools import wraps
 
-RESOURCE_TEMPLATE_ROOT_DIRECTORY = str(pathlib.Path(__file__).parent.parent)
-
 AWS_DEFAULT_PARAMS = {
     "input_setup_cicd_and_project": "CICD_and_Project",
     "input_root_dir": "my-mlops-project",
     "input_project_name": "my-mlops-project",
-    "input_cloud": "aws",
     "input_cicd_platform": "github_actions",
     "input_databricks_staging_workspace_host": "https://your-staging-workspace.cloud.databricks.com",
     "input_databricks_prod_workspace_host": "https://your-prod-workspace.cloud.databricks.com",
@@ -58,6 +55,7 @@ def generated_project_dir(
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
+    template_path
 ):
     params = {
         "input_setup_cicd_and_project": setup_cicd_and_project,
@@ -84,7 +82,7 @@ def generated_project_dir(
                 "input_inference_table_name": "dummy.schema.table",
             }
         )
-    generate(tmpdir, databricks_cli, params)
+    generate(tmpdir, databricks_cli, params, template_path)
     return tmpdir
 
 
@@ -112,7 +110,15 @@ def markdown_checker_configs(tmpdir):
     with open(tmpdir / "my-mlops-project" / file_name, "w") as outfile:
         json.dump(markdown_checker_config_dict, outfile)
 
-def generate(directory, databricks_cli, context):
+def generate(directory, databricks_cli, context, template_path):
+    """
+    Generates a Databricks Asset Bundle project using the MLOps Stacks template.
+    
+    :param directory: Target output directory (pathlib.Path or str)
+    :param databricks_cli: Path to the databricks CLI executable
+    :param context: Dictionary of template variables to override defaults
+    :param template_path: Optional relative path to a specific monorepo template folder
+    """
     default_params = AWS_DEFAULT_PARAMS
 
     params = {
@@ -130,15 +136,28 @@ def generate(directory, databricks_cli, context):
     custom_env["DATABRICKS_HOST"] = "https://123"
     custom_env["DATABRICKS_TOKEN"] = "dapi123"
 
-    # 3. Execute the bundle init command using the updated environment
+    # 3. Explicitly resolve the target template directory using the required parameter
+    repo_root = pathlib.Path(__file__).parent.parent
+    target_template_directory = repo_root / template_path
+    
+    # 4. Execute bundle init safely using a list structure
+    command = [
+        str(databricks_cli),
+        "bundle",
+        "init",
+        str(target_template_directory),
+        "--config-file",
+        str(config_file),
+        "--output-dir",
+        str(directory),
+    ]
+
     subprocess.run(
-        f"{databricks_cli} bundle init {RESOURCE_TEMPLATE_ROOT_DIRECTORY} --config-file {config_file} --output-dir {directory}",
-        shell=True,
+        command,
+        shell=False, # Securely handles arguments without standard shell parsing rules
         check=True,
-        env=custom_env,  # Bypasses interactive prompts seamlessly
+        env=custom_env, # Bypasses interactive prompts seamlessly
     )
-
-
 
 @pytest.fixture(scope="session")
 def databricks_cli(tmp_path_factory):

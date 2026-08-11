@@ -37,25 +37,11 @@
         }
       }
     },
-    "input_cloud": {
-      "order": 4,
-      "type": "string",
-      "description": "Cloud",
-      "const": "aws"
-    },
     "input_cicd_platform": {
       "order": 5,
       "type": "string",
-      "description": "\nSelect CICD platform",
-      "default": "github_actions",
-      "enum": ["github_actions", "github_actions_for_github_enterprise_servers"],
-      "skip_prompt_if": {
-        "properties": {
-          "input_setup_cicd_and_project": {
-            "const": "Project_Only"
-          }
-        }
-      }
+      "description": "CICD platform",
+      "const": "github_actions"
     },
     "input_databricks_staging_workspace_host": {
       "order": 6,

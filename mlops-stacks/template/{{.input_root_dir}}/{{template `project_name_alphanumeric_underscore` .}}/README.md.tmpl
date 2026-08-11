@@ -4,7 +4,7 @@ If you're a data scientist just getting started with this repo for a brand new M
 adapting the provided example code to your ML problem. Then making and 
 testing ML code changes on Databricks or your local machine.
 
-The "Getting Started" docs can be found at {{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "dev-tools/bundles/mlops-stacks.html")) }}.
+The "Getting Started" docs can be found at {{ template `generate_doc_link` (map (pair "path" "dev-tools/bundles/mlops-stacks.html")) }}.
 
 ## Table of contents
 * [Code structure](#code-structure): structure of this project.
@@ -24,7 +24,7 @@ This project contains the following components:
 | Component                  | Description                                                                                                                                                                                                                                                                                                                                             |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ML Code                    | Example ML project code, with unit tested Python modules and notebooks                                                                                                                                                                                                                                                                                  |
-| ML Resources as Code | ML pipeline resources (training and batch inference jobs with schedules, etc) configured and deployed through [databricks CLI bundles]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "dev-tools/cli/bundle-cli.html")) }})                                                                                              |
+| ML Resources as Code | ML pipeline resources (training and batch inference jobs with schedules, etc) configured and deployed through [databricks CLI bundles]({{ template `generate_doc_link` (map (pair "path" "dev-tools/cli/bundle-cli.html")) }})                                                                                              |
 
 contained in the following files:
 
@@ -105,11 +105,11 @@ The sample ML code consists of the following:
 These sample module contains features logic that can be used to generate and populate tables in Feature Store.
 In each module, there is `compute_features_fn` method that you need to implement. This should compute a features dataframe
 (each column being a separate feature), given the input dataframe, timestamp column and time-ranges. 
-The output dataframe will be persisted in a [time-series Feature Store table]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "machine-learning/feature-store/time-series.html")) }}).
+The output dataframe will be persisted in a [time-series Feature Store table]({{ template `generate_doc_link` (map (pair "path" "machine-learning/feature-store/time-series.html")) }}).
 See the example modules' documentation for more information.
 * Python unit tests for feature computation modules in `tests/feature_engineering` folder.
 * Feature engineering notebook, `feature_engineering/GenerateAndWriteFeatures.py`, that reads input dataframes, dynamically loads feature computation modules, executes their `compute_features_fn` method and writes the outputs to a Feature Store table (creating it if missing).
-* Training notebook that [trains]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "machine-learning/feature-store/train-models-with-feature-store.html")) }} ) a regression model by creating a training dataset using the Feature Store client.
+* Training notebook that [trains]({{ template `generate_doc_link` (map (pair "path" "machine-learning/feature-store/train-models-with-feature-store.html")) }} ) a regression model by creating a training dataset using the Feature Store client.
 * Model deployment and batch inference notebooks that deploy and use the trained model. 
 * An automated integration test is provided (in `.github/workflows/{{ .input_project_name }}-run-tests.yml`) that executes a multi task run on Databricks involving the feature engineering and model training notebooks.
 
@@ -136,22 +136,22 @@ This will allow you to develop locally and use databricks CLI bundles to deploy 
 #### Prerequisites
 You'll need:
 * Access to run commands on a cluster running Databricks Runtime ML version 11.0 or above in your dev Databricks workspace
-* To set up [Databricks Git folders]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "repos/index.html")) }}): see instructions below
+* To set up [Databricks Git folders]({{ template `generate_doc_link` (map (pair "path" "repos/index.html")) }}): see instructions below
 
 #### Configuring Databricks Git folders
-To use Git folders, [set up git integration]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "repos/repos-setup.html")) }}) in your dev workspace.
+To use Git folders, [set up git integration]({{ template `generate_doc_link` (map (pair "path" "repos/repos-setup.html")) }}) in your dev workspace.
 
 If the current project has already been pushed to a hosted Git repo, follow the
-[UI workflow]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "repos/git-operations-with-repos#add-a-repo-and-connect-remotely-later")) }})
+[UI workflow]({{ template `generate_doc_link` (map (pair "path" "repos/git-operations-with-repos#add-a-repo-and-connect-remotely-later")) }})
 to clone it into your dev workspace and iterate. 
 
 Otherwise, e.g. if iterating on ML code for a new project, follow the steps below:
-* Follow the [UI workflow]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "repos/git-operations-with-repos#add-a-repo-and-connect-remotely-later")) }})
+* Follow the [UI workflow]({{ template `generate_doc_link` (map (pair "path" "repos/git-operations-with-repos#add-a-repo-and-connect-remotely-later")) }})
   for creating a repo, but uncheck the "Create repo by cloning a Git repository" checkbox.
 * Install the `dbx` CLI via `pip install --upgrade dbx`
 * Run `databricks configure --profile {{ .input_project_name }}-dev --token --host <your-dev-workspace-url>`, passing the URL of your dev workspace.
   This should prompt you to enter an API token
-* [Create a personal access token]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "dev-tools/auth/pat.html")) }})
+* [Create a personal access token]({{ template `generate_doc_link` (map (pair "path" "dev-tools/auth/pat.html")) }})
   in your dev workspace and paste it into the prompt from the previous step
 * From within the root directory of the current project, use the [dbx sync](https://dbx.readthedocs.io/en/latest/guides/python/devloop/mixed/#using-dbx-sync-repo-for-local-to-repo-synchronization) tool to copy code files from your local machine into the Repo by running
   `dbx sync repo --profile {{ .input_project_name }}-dev --source . --dest-repo your-repo-name`, where `your-repo-name` should be the last segment of the full repo name (`/Repos/username/your-repo-name`)
@@ -163,7 +163,7 @@ You can iterate on the feature transform modules locally in your favorite IDE be
 
 #### Running code on Databricks
 You can iterate on ML code by running the provided `feature_engineering/GenerateAndWriteFeatures.py` notebook on Databricks using
-[Git folders]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "repos/index.html")) }}). This notebook drives execution of
+[Git folders]({{ template `generate_doc_link` (map (pair "path" "repos/index.html")) }}). This notebook drives execution of
 the feature transforms code defined under ``features``. You can use multiple browser tabs to edit
 logic in `features` and run the feature engineering pipeline in the `GenerateAndWriteFeatures.py` notebook.
 

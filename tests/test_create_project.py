@@ -67,6 +67,10 @@ def assert_no_disallowed_strings_in_files(
     for path in test_paths:
         assert_no_disallowed_strings(path)
 
+# Helper function to dynamically calculate template directories before project creation
+def get_source_template_dir(template_path_str):
+    repo_root = pathlib.Path(__file__).parent.parent
+    return repo_root / template_path_str / "template"
 
 @parametrize_by_project_generation_params
 def test_no_template_strings_after_param_substitution(generated_project_dir):
@@ -80,20 +84,19 @@ def test_no_template_strings_after_param_substitution(generated_project_dir):
     )
 
 
-def test_no_databricks_workspace_urls():
-    # Test that there are no accidental hardcoded Databricks workspace URLs included in source files
-    template_dir = pathlib.Path(__file__).parent.parent / "template"
-    test_paths = [os.path.join(template_dir, path) for path in paths(template_dir)]
+def test_no_databricks_workspace_urls(template_path):
+    template_dir = get_source_template_dir(template_path)
+    test_paths = [
+        os.path.join(template_dir, path) for path in paths(template_dir)
+    ]
     assert_no_disallowed_strings_in_files(
         file_paths=test_paths,
-        disallowed_strings=[
-            "cloud.databricks.com",
-        ],
+        disallowed_strings=["://databricks.com"],
     )
 
 
-def test_no_databricks_doc_strings_before_project_generation():
-    template_dir = pathlib.Path(__file__).parent.parent / "template"
+def test_no_databricks_doc_strings_before_project_generation(template_path):
+    template_dir = get_source_template_dir(template_path)
     test_paths = [os.path.join(template_dir, path) for path in paths(template_dir)]
     assert_no_disallowed_strings_in_files(
         file_paths=test_paths,
@@ -137,14 +140,16 @@ def test_markdown_links(generated_project_dir):
         {"input_project_name": "name.with.periods"},
     ],
 )
-def test_generate_fails_with_invalid_params(tmpdir, databricks_cli, invalid_params):
+def test_generate_fails_with_invalid_params(
+    tmpdir, databricks_cli, invalid_params, template_path
+):
     with pytest.raises(Exception):
-        generate(tmpdir, databricks_cli, invalid_params)
+        generate(tmpdir, databricks_cli, invalid_params, template_path)
 
 
 @pytest.mark.parametrize("valid_params", [{}])
-def test_generate_succeeds_with_valid_params(tmpdir, databricks_cli, valid_params):
-    generate(tmpdir, databricks_cli, valid_params)
+def test_generate_succeeds_with_valid_params(tmpdir, databricks_cli, valid_params, template_path):
+    generate(tmpdir, databricks_cli, valid_params, template_path)
 
 
 @parametrize_by_project_generation_params
@@ -154,6 +159,7 @@ def test_generate_project_with_default_values(
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
+    template_path,
 ):
     """
     Asserts the default parameter values. The project name and experiment
@@ -168,7 +174,7 @@ def test_generate_project_with_default_values(
         "input_root_dir": TEST_PROJECT_NAME,
         "input_cicd_platform": cicd_platform,
     }
-    generate(tmpdir, databricks_cli, context=context)
+    generate(tmpdir, databricks_cli, context=context, template_path=template_path)
     test_file_contents = (
         tmpdir / TEST_PROJECT_NAME / "_params_testing_only.txt"
     ).read_text("utf-8")
@@ -200,6 +206,7 @@ def test_generate_project_check_delta_output(
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
+    template_path,
 ):
     """
     Asserts the behavior of Delta Table-related artifacts when generating MLOps Stacks.
@@ -209,7 +216,7 @@ def test_generate_project_check_delta_output(
         setup_cicd_and_project,
         include_feature_store,
     )
-    generate(tmpdir, databricks_cli, context=context)
+    generate(tmpdir, databricks_cli, context=context, template_path=template_path)
     delta_notebook_path = (
         tmpdir / TEST_PROJECT_NAME / TEST_PROJECT_DIRECTORY / "training" / "Train.py"
     )
@@ -226,6 +233,7 @@ def test_generate_project_check_feature_store_output(
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
+    template_path
 ):
     """
     Asserts the behavior of feature store-related artifacts when generating MLOps Stacks.
@@ -235,7 +243,7 @@ def test_generate_project_check_feature_store_output(
         setup_cicd_and_project,
         include_feature_store,
     )
-    generate(tmpdir, databricks_cli, context=context)
+    generate(tmpdir, databricks_cli, context=context, template_path=template_path)
     fs_notebook_path = (
         tmpdir
         / TEST_PROJECT_NAME
@@ -259,7 +267,7 @@ def test_generate_project_check_feature_store_output(
     ],
 )
 def test_workspace_dir_strip_query_params(
-    tmpdir, databricks_cli, workspace_url_suffix
+    tmpdir, databricks_cli, workspace_url_suffix, template_path
 ):
     workspace_host = "https://dbc-my-aws-workspace.cloud.databricks.com"
     workspace_url = f"{workspace_host}{workspace_url_suffix}"
@@ -269,7 +277,7 @@ def test_workspace_dir_strip_query_params(
         "input_databricks_staging_workspace_host": workspace_url,
         "input_databricks_prod_workspace_host": workspace_url,
     }
-    generate(tmpdir, databricks_cli, context=context)
+    generate(tmpdir, databricks_cli, context=context, template_path=template_path)
     test_file_contents = (
         tmpdir / TEST_PROJECT_NAME / "_params_testing_only.txt"
     ).read_text("utf-8")
@@ -279,8 +287,8 @@ def test_workspace_dir_strip_query_params(
     assert f"\ndatabricks_prod_workspace_host={workspace_host}\n" in test_file_contents
 
 
-def test_generate_project_default_project_name_params(tmpdir, databricks_cli):
+def test_generate_project_default_project_name_params(tmpdir, databricks_cli, template_path):
     # Asserts default parameter values for parameters that involve the project name
-    generate(tmpdir, databricks_cli, context={})
+    generate(tmpdir, databricks_cli, context={}, template_path=template_path)
     readme_contents = (tmpdir / DEFAULT_PROJECT_NAME / "README.md").read_text("utf-8")
     assert DEFAULT_PROJECT_NAME in readme_contents

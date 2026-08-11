@@ -65,15 +65,12 @@ def _install_actionlint(dest_dir):
 
 
 @pytest.mark.parametrize(
-    "cicd_platform", ["github_actions", "github_actions_for_github_enterprise_servers"]
+    "cicd_platform", ["github_actions"]
 )
 @pytest.mark.parametrize(
     "setup_cicd_and_project,include_feature_store",
     [
         ("CICD_and_Project", "no"),
-        ("CICD_and_Project", "no"),
-        ("CICD_and_Project", "no"),
-        ("CICD_and_Project", "yes"),
         ("CICD_and_Project", "yes"),
         ("CICD_Only", "no"),
     ],

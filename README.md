@@ -76,7 +76,6 @@ This will prompt for parameters for initialization. Some of these parameters are
    We expect Data Scientists to specify ``Project_Only`` to get 
    started in a development capacity, and when ready to move the project to Staging/Production, CI/CD can be set up. We expect that step to be done by Machine Learning Engineers (MLEs) who can specify ``CICD_Only`` during initialization and use the provided workflow to setup CI/CD for one or more projects.
  * ``input_root_dir``: name of the root directory. When initializing with ``CICD_and_Project``, this field will automatically be set to ``input_project_name``.
- * ``input_cloud``: Cloud provider you use with Databricks (AWS).
 
 Others must be correctly specified for CI/CD to work:
  * ``input_cicd_platform`` : CI/CD platform of choice. Currently we support GitHub Actions and GitHub Actions for GitHub Enterprise Servers.

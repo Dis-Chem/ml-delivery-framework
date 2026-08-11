@@ -6,11 +6,6 @@
       "description": "Root Directory",
       "type": "string"
     },
-    "input_cloud": {
-      "order": 2,
-      "description": "Cloud",
-      "type": "string"
-    },
     "input_cicd_platform": {
       "order": 3,
       "description": "CICD Platform",

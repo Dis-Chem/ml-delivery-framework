@@ -38,8 +38,7 @@ Update parameters in your fork as needed in `databricks_template_schema.json` an
 parameters makes it easier for data scientists to start new projects, at the cost of reduced flexibility.
 
 For example, you may have a fixed set of staging & prod Databricks workspaces (or use a single staging & prod workspace), so the
-`input_databricks_staging_workspace_host` and `input_databricks_prod_workspace_host` parameters may be unnecessary. You may
-also run all of your ML pipelines on a single cloud, in which case the `input_cloud` parameter is unnecessary.
+`input_databricks_staging_workspace_host` and `input_databricks_prod_workspace_host` parameters may be unnecessary. 
 
 The easiest way to prune parameters and replace them with hardcoded values is to follow
 the [contributor guide](README.md#previewing-changes) to generate an example project with

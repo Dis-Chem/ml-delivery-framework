@@ -14,7 +14,7 @@
 ## Intro
 
 ### databricks CLI bundles
-MLOps Stacks ML resources are configured and deployed through [databricks CLI bundles]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "dev-tools/cli/bundle-cli.html")) }}).
+MLOps Stacks ML resources are configured and deployed through [databricks CLI bundles]({{ template `generate_doc_link` (map (pair "path" "dev-tools/cli/bundle-cli.html")) }}).
 The bundle setting file must be expressed in YAML format and must contain at minimum the top-level bundle mapping.
 
 The databricks CLI bundles top level is defined by file `{{template `project_name_alphanumeric_underscore` .}}/databricks.yml`.
@@ -75,14 +75,14 @@ Upon merging code into the release branch, the release branch content will be de
 
 To set up the databricks CLI using a Databricks personal access token, take the following steps:
 
-1. Follow [databricks CLI]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "dev-tools/cli/databricks-cli.html")) }}) to download and set up the databricks CLI locally.
+1. Follow [databricks CLI]({{ template `generate_doc_link` (map (pair "path" "dev-tools/cli/databricks-cli.html")) }}) to download and set up the databricks CLI locally.
 2. Complete the `TODO` in `{{template `project_name_alphanumeric_underscore` .}}/databricks.yml` to add the dev workspace URI under `targets.dev.workspace.host`.
-3. [Create a personal access token]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "dev-tools/auth/pat.html")) }})
+3. [Create a personal access token]({{ template `generate_doc_link` (map (pair "path" "dev-tools/auth/pat.html")) }})
   in your dev workspace and copy it.
 4. Set an env variable `DATABRICKS_TOKEN` with your Databricks personal access token in your terminal. For example, run `export DATABRICKS_TOKEN=dapi12345` if the access token is dapi12345.
 5. You can now use the databricks CLI to validate and deploy ML resource configurations to the dev workspace.
 
-Alternatively, you can use the other approaches described in the [databricks CLI]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "dev-tools/cli/databricks-cli.html")) }}) documentation to set up authentication. For example, using your Databricks username/password, or seting up a local profile.
+Alternatively, you can use the other approaches described in the [databricks CLI]({{ template `generate_doc_link` (map (pair "path" "dev-tools/cli/databricks-cli.html")) }}) documentation to set up authentication. For example, using your Databricks username/password, or seting up a local profile.
 
 ### Validate and provision ML resource configurations
 1. After installing the databricks CLI and creating the `DATABRICKS_TOKEN` env variable, change to the `{{template `project_name_alphanumeric_underscore` .}}` directory.
@@ -232,7 +232,7 @@ resources:
 The example above defines a Databricks job with name `${bundle.target}-{{ .input_project_name }}-batch-inference-job`
 that runs the notebook under `{{template `project_name_alphanumeric_underscore` .}}/deployment/batch_inference/BatchInference.py` to regularly apply your ML model for batch inference.
 
-Jobs run on [serverless compute]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "jobs/run-serverless-jobs.html")) }}) by default: the task references a serverless environment by its `environment_key` (`default` here), and that key is defined once under `environments`, with its own dependencies installed from `requirements.txt`. Multiple tasks in the same job can share the same `environment_key` to reuse one environment definition.
+Jobs run on [serverless compute]({{ template `generate_doc_link` (map (pair "path" "jobs/run-serverless-jobs.html")) }}) by default: the task references a serverless environment by its `environment_key` (`default` here), and that key is defined once under `environments`, with its own dependencies installed from `requirements.txt`. Multiple tasks in the same job can share the same `environment_key` to reuse one environment definition.
 
 We specify a `batch_inference_job` under `resources/jobs` to define a databricks workflow with internal key `batch_inference_job` and job name `{bundle.target}-{{ .input_project_name }}-batch-inference-job`.
 The workflow contains a single task with task key `batch_inference_job`. The task runs notebook `../deployment/batch_inference/BatchInference.py` with provided parameters `env` and `input_table_name` passing to the notebook.

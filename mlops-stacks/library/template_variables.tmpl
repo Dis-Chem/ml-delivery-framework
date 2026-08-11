@@ -5,9 +5,7 @@
             {{ print .Scheme `://` .Host }}
         {{- end -}}
     {{- else -}}
-        {{- if eq .input_cloud `aws` -}}
-            https://your-prod-workspace.cloud.databricks.com
-        {{- end -}}
+        https://your-prod-workspace.cloud.databricks.com
     {{- end -}}
 {{- end }}
 
@@ -17,18 +15,12 @@
             {{- print .Scheme `://` .Host -}}
         {{- end -}}
     {{- else -}}
-        {{- if eq .input_cloud `aws` -}}
-            https://your-staging-workspace.cloud.databricks.com
-        {{- end -}}
+        https://your-staging-workspace.cloud.databricks.com
     {{- end -}}
 {{- end }}
 
 {{ define `cloud_specific_node_type_id` -}}
-    {{- if (eq .input_cloud `aws`) -}}
-        i3.xlarge
-    {{- else -}}
-        {{ fail `Unknown cloud platform` }}
-    {{- end -}}
+    i3.xlarge
 {{- end -}}
 
 {{ define `model_name` -}}

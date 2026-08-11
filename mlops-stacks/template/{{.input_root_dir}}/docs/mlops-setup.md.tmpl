@@ -57,10 +57,10 @@ git push upstream {{ .input_default_branch }}
 ### Set up authentication for CI/CD
 #### Set up Service Principal
 To authenticate and manage ML resources created by CI/CD,
-[service principals]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals.html")) }})
+[service principals]({{ template `generate_doc_link` (map (pair "path" "administration-guide/users-groups/service-principals.html")) }})
 for the project should be created and added to both staging and prod workspaces. Follow
-[Add a service principal to your Databricks account]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals.html#add-a-service-principal-to-your-databricks-account")) }})
-and [Add a service principal to a workspace]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals.html#add-a-service-principal-to-a-workspace")) }})
+[Add a service principal to your Databricks account]({{ template `generate_doc_link` (map (pair "path" "administration-guide/users-groups/service-principals.html#add-a-service-principal-to-your-databricks-account")) }})
+and [Add a service principal to a workspace]({{ template `generate_doc_link` (map (pair "path" "administration-guide/users-groups/service-principals.html#add-a-service-principal-to-a-workspace")) }})
 for details.
 
 For your convenience, we also have a [Terraform module](https://registry.terraform.io/modules/databricks/mlops-aws-project/databricks/latest) that can set up your service principals.
@@ -92,7 +92,7 @@ i.e. for each environment
 
 #### Set secrets for CI/CD
 After creating the service principals and adding them to the respective staging and prod workspaces, follow
-[Manage access tokens for a service principal]({{ template `generate_doc_link` (map (pair "cloud" .input_cloud) (pair "path" "administration-guide/users-groups/service-principals.html#manage-access-tokens-for-a-service-principal")) }})
+[Manage access tokens for a service principal]({{ template `generate_doc_link` (map (pair "path" "administration-guide/users-groups/service-principals.html#manage-access-tokens-for-a-service-principal")) }})
 to get service principal tokens for staging and prod workspace and follow [Encrypted secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
 to add the secrets to GitHub:
 - `STAGING_WORKSPACE_TOKEN` : service principal token for staging workspace

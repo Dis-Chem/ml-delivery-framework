@@ -2,7 +2,6 @@
   "input_setup_cicd_and_project": "Project_Only",
   "input_root_dir": "projects",
   "input_project_name": "example-aws-github-project",
-  "input_cloud": "aws",
   "input_cicd_platform": "github_actions",
   "input_databricks_test_workspace_host": "https://dbc-26cf5e15-d40d.cloud.databricks.com",
   "input_databricks_staging_workspace_host": "https://dbc-9f6e09b3-ca38.cloud.databricks.com",
