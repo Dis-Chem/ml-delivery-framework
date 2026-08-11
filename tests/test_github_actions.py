@@ -6,6 +6,7 @@ import subprocess
 import tarfile
 import urllib.request
 import pytest
+import pathlib
 from utils import (
     databricks_cli,
     generated_project_dir,
@@ -101,19 +102,21 @@ def test_generated_yaml_format(generated_project_dir, template_path):
         ("CICD_and_Project", "yes"),
     ],
 )
-# Explicitly added template_path to unlock the conftest matrix loop mapping
 def test_run_unit_tests_workflow(generated_project_dir, template_path):
     """Test that the GitHub workflow for running unit tests in the materialized project passes"""
-    project_dir = generated_project_dir / "my-mlops-project"
+    # Safely convert the py.path.local object to a standard pathlib.Path object
+    project_dir = pathlib.Path(generated_project_dir) / "my-mlops-project"
     
-    # Dynamic wildcard search for the generated test workflow file.
-    # This prevents failures if template variants name their workflows differently.
+    # Locate the workflows directory
     workflows_dir = project_dir / ".github" / "workflows"
+    
+    # This glob will now execute flawlessly because workflows_dir is a true Path object
     workflow_files = list(workflows_dir.glob("*-run-tests.yml"))
     
     if not workflow_files:
         pytest.fail(f"No run-tests workflow found in {workflows_dir} for template {template_path}")
     
+    # Safely grab the file name from the first match in the list
     target_workflow = workflow_files[0].name
 
     subprocess.run(
@@ -121,5 +124,5 @@ def test_run_unit_tests_workflow(generated_project_dir, template_path):
         shell=True,
         check=True,
         executable="/bin/bash",
-        cwd=project_dir,
+        cwd=str(project_dir), # Convert Path back to string for execution context safety
     )
