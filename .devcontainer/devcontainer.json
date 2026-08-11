@@ -1,6 +1,15 @@
 {
   "name": "ml-delivery-framework",
   "image": "mcr.microsoft.com/devcontainers/python:3.9-bookworm",
+  "features": {
+    // Provides node/npm on PATH for the `markdown-link-check` install in
+    // tests/test_create_project.py::test_markdown_links. Installs under
+    // /usr/local/share/nvm, which the base image already has on PATH, so
+    // `npm install -g` works without sudo.
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
   "customizations": {
     "vscode": {
       "settings": {

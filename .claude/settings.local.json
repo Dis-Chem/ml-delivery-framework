@@ -5,7 +5,8 @@
       "Bash(python3 -m pytest \"tests/test_create_project.py::test_generate_project_with_default_values[CICD_and_Project-no-github_actions-aws]\")",
       "PowerShell(cmd /c \"C:/Users/210734/AppData/Local/Temp/dbtest/databricks --version\"; echo \"EXIT: $LASTEXITCODE\")",
       "PowerShell($env:DATABRICKS_HOST='https://123'; $env:DATABRICKS_TOKEN='dapi123'; echo \"EXIT: 0\")",
-      "PowerShell(python -m pytest tests/test_create_project.py tests/test_github_actions.py -v 2>&1)"
+      "PowerShell(python -m pytest tests/test_create_project.py tests/test_github_actions.py -v 2>&1)",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(json.dumps\\(d.get\\('annotations',{}\\),indent=1\\)\\)\")"
     ]
   }
 }

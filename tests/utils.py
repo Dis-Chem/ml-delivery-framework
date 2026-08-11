@@ -96,6 +96,10 @@ def markdown_checker_configs(tmpdir):
     markdown_checker_config_dict = {
         "ignorePatterns": [
             {"pattern": "http://127.0.0.1:5000"},
+            # Placeholder workspace hosts substituted into the generated docs by
+            # AWS_DEFAULT_PARAMS. They don't resolve, so exclude them from link checking.
+            {"pattern": "https://your-staging-workspace.cloud.databricks.com*"},
+            {"pattern": "https://your-prod-workspace.cloud.databricks.com*"},
         ],
         "httpHeaders": [
             {

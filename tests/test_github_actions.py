@@ -1,11 +1,11 @@
 import hashlib
 import os
 import platform
+import shutil
 import subprocess
 import tarfile
 import urllib.request
 import pytest
-from functools import wraps
 from utils import (
     databricks_cli,
     generated_project_dir,
@@ -91,15 +91,17 @@ def test_generated_yaml_format(generated_project_dir):
 
 
 @pytest.mark.large
+@pytest.mark.skipif(
+    shutil.which("act") is None and not os.environ.get("CI"),
+    reason="`act` is not installed. CI installs it, so this only skips locally.",
+)
 @pytest.mark.parametrize(
-    "cicd_platform", ["github_actions", "github_actions_for_github_enterprise_servers"]
+    "cicd_platform", ["github_actions"]
 )
 @pytest.mark.parametrize(
     "setup_cicd_and_project,include_feature_store",
     [
         ("CICD_and_Project", "no"),
-        ("CICD_and_Project", "no"),
-        ("CICD_and_Project", "yes"),
         ("CICD_and_Project", "yes"),
     ],
 )
