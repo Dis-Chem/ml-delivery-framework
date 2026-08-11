@@ -14,7 +14,7 @@ def spark(request):
         request: pytest.FixtureRequest object
     """
     spark = (
-        SparkSession.builder.main("local[1]")
+        SparkSession.builder.master("local[1]")
         .appName("pytest-pyspark-local-testing")
         .getOrCreate()
     )
