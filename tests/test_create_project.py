@@ -9,7 +9,6 @@ from utils import (
     markdown_checker_configs,
     paths,
     generated_project_dir,
-    parametrize_by_cloud,
     parametrize_by_project_generation_params,
 )
 from unittest import mock
@@ -28,20 +27,9 @@ DEFAULT_PARAM_VALUES = {
     "input_unity_catalog_read_user_group": "account users",
     "input_inference_table_name": "dummy.schema.table",
 }
-DEFAULT_PARAMS_AZURE = {
-    "input_cloud": "azure",
-    "input_databricks_staging_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
-    "input_databricks_prod_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
-}
 DEFAULT_PARAMS_AWS = {
-    "input_cloud": "aws",
     "input_databricks_staging_workspace_host": "https://your-staging-workspace.cloud.databricks.com",
     "input_databricks_prod_workspace_host": "https://your-prod-workspace.cloud.databricks.com",
-}
-DEFAULT_PARAMS_GCP = {
-    "input_cloud": "gcp",
-    "input_databricks_staging_workspace_host": "https://your-staging-workspace.gcp.databricks.com",
-    "input_databricks_prod_workspace_host": "https://your-prod-workspace.gcp.databricks.com",
 }
 
 
@@ -81,7 +69,7 @@ def assert_no_disallowed_strings_in_files(
 
 
 @parametrize_by_project_generation_params
-def test_no_template_strings_after_param_substitution(cloud, generated_project_dir):
+def test_no_template_strings_after_param_substitution(generated_project_dir):
     assert_no_disallowed_strings_in_files(
         file_paths=[
             os.path.join(generated_project_dir, path)
@@ -99,9 +87,7 @@ def test_no_databricks_workspace_urls():
     assert_no_disallowed_strings_in_files(
         file_paths=test_paths,
         disallowed_strings=[
-            "azuredatabricks.net",
             "cloud.databricks.com",
-            "gcp.databricks.com",
         ],
     )
 
@@ -112,27 +98,30 @@ def test_no_databricks_doc_strings_before_project_generation():
     assert_no_disallowed_strings_in_files(
         file_paths=test_paths,
         disallowed_strings=[
-            "https://learn.microsoft.com/en-us/azure/databricks",
             "https://docs.databricks.com/",
-            "https://docs.gcp.databricks.com/",
         ],
     )
 
 
 @pytest.mark.large
 @parametrize_by_project_generation_params
-def test_markdown_links(cloud, generated_project_dir):
+def test_markdown_links(generated_project_dir):
     markdown_checker_configs(generated_project_dir)
+
+    commands = (
+        "npm install -g markdown-link-check@3.10.3 && "
+        "find . -name '*.md' -print0 | "
+        "xargs -0 -n1 markdown-link-check -c ./checker-config.json"
+    )
+
     subprocess.run(
-        """
-        npm install -g markdown-link-check@3.10.3
-        find . -name \*.md -print0 | xargs -0 -n1 markdown-link-check -c ./checker-config.json
-        """,
+        commands,
         shell=True,
         check=True,
         executable="/bin/bash",
         cwd=(generated_project_dir / "my-mlops-project"),
     )
+
 
 
 @pytest.mark.parametrize(
@@ -162,7 +151,6 @@ def test_generate_succeeds_with_valid_params(tmpdir, databricks_cli, valid_param
 def test_generate_project_with_default_values(
     tmpdir,
     databricks_cli,
-    cloud,
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
@@ -178,28 +166,18 @@ def test_generate_project_with_default_values(
     context = {
         "input_project_name": TEST_PROJECT_NAME,
         "input_root_dir": TEST_PROJECT_NAME,
-        "input_cloud": cloud,
         "input_cicd_platform": cicd_platform,
     }
-    # Testing that Azure is the default option.
-    if cloud == "azure":
-        del context["input_cloud"]
     generate(tmpdir, databricks_cli, context=context)
     test_file_contents = (
         tmpdir / TEST_PROJECT_NAME / "_params_testing_only.txt"
     ).read_text("utf-8")
-    if cloud == "azure":
-        params = {**DEFAULT_PARAM_VALUES, **DEFAULT_PARAMS_AZURE}
-    elif cloud == "aws":
-        params = {**DEFAULT_PARAM_VALUES, **DEFAULT_PARAMS_AWS}
-    elif cloud == "gcp":
-        params = {**DEFAULT_PARAM_VALUES, **DEFAULT_PARAMS_GCP}
+    params = {**DEFAULT_PARAM_VALUES, **DEFAULT_PARAMS_AWS}
     for param, value in params.items():
         assert f"{param}={value}" in test_file_contents
 
 
 def prepareContext(
-    cloud,
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
@@ -208,7 +186,6 @@ def prepareContext(
         "input_setup_cicd_and_project": setup_cicd_and_project,
         "input_project_name": TEST_PROJECT_NAME,
         "input_root_dir": TEST_PROJECT_NAME,
-        "input_cloud": cloud,
         "input_cicd_platform": cicd_platform,
     }
     if include_feature_store != "":
@@ -220,7 +197,6 @@ def prepareContext(
 def test_generate_project_check_delta_output(
     tmpdir,
     databricks_cli,
-    cloud,
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
@@ -229,7 +205,6 @@ def test_generate_project_check_delta_output(
     Asserts the behavior of Delta Table-related artifacts when generating MLOps Stacks.
     """
     context = prepareContext(
-        cloud,
         cicd_platform,
         setup_cicd_and_project,
         include_feature_store,
@@ -248,7 +223,6 @@ def test_generate_project_check_delta_output(
 def test_generate_project_check_feature_store_output(
     tmpdir,
     databricks_cli,
-    cloud,
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
@@ -257,7 +231,6 @@ def test_generate_project_check_feature_store_output(
     Asserts the behavior of feature store-related artifacts when generating MLOps Stacks.
     """
     context = prepareContext(
-        cloud,
         cicd_platform,
         setup_cicd_and_project,
         include_feature_store,
@@ -285,22 +258,16 @@ def test_generate_project_check_feature_store_output(
         "#ml/dashboard",
     ],
 )
-@parametrize_by_cloud
 def test_workspace_dir_strip_query_params(
-    tmpdir, databricks_cli, cloud, workspace_url_suffix
+    tmpdir, databricks_cli, workspace_url_suffix
 ):
-    workspace_host = {
-        "aws": "https://dbc-my-aws-workspace.cloud.databricks.com",
-        "azure": "https://adb-mycoolworkspace.11.azuredatabricks.net",
-        "gcp": "https://dbc-my-gcp-workspace.gcp.databricks.com",
-    }[cloud]
+    workspace_host = "https://dbc-my-aws-workspace.cloud.databricks.com"
     workspace_url = f"{workspace_host}{workspace_url_suffix}"
     context = {
         "input_project_name": TEST_PROJECT_NAME,
         "input_root_dir": TEST_PROJECT_NAME,
         "input_databricks_staging_workspace_host": workspace_url,
         "input_databricks_prod_workspace_host": workspace_url,
-        "input_cloud": cloud,
     }
     generate(tmpdir, databricks_cli, context=context)
     test_file_contents = (

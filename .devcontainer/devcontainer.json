@@ -1,0 +1,21 @@
+{
+  "name": "ml-delivery-framework",
+  "image": "mcr.microsoft.com/devcontainers/python:3.9-bookworm",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "dev.containers.mountWaylandSocket": false,
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "databricks.databricks"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "vscode",
+  "updateRemoteUserUidDefault": "on"
+}

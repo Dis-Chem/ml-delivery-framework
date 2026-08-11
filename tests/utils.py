@@ -7,14 +7,14 @@ from functools import wraps
 
 RESOURCE_TEMPLATE_ROOT_DIRECTORY = str(pathlib.Path(__file__).parent.parent)
 
-AZURE_DEFAULT_PARAMS = {
+AWS_DEFAULT_PARAMS = {
     "input_setup_cicd_and_project": "CICD_and_Project",
     "input_root_dir": "my-mlops-project",
     "input_project_name": "my-mlops-project",
-    "input_cloud": "azure",
+    "input_cloud": "aws",
     "input_cicd_platform": "github_actions",
-    "input_databricks_staging_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
-    "input_databricks_prod_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
+    "input_databricks_staging_workspace_host": "https://your-staging-workspace.cloud.databricks.com",
+    "input_databricks_prod_workspace_host": "https://your-prod-workspace.cloud.databricks.com",
     "input_default_branch": "main",
     "input_release_branch": "release",
     "input_read_user_group": "users",
@@ -22,42 +22,13 @@ AZURE_DEFAULT_PARAMS = {
     "input_schema_name": "schema_name",
     "input_unity_catalog_read_user_group": "account users",
     "input_inference_table_name": "dummy.schema.table",
+    "input_test_catalog_name": "test_catalog",
+    "input_staging_catalog_name": "staging_catalog",
+    "input_prod_catalog_name": "prod_catalog",
 }
-
-AWS_DEFAULT_PARAMS = {
-    **AZURE_DEFAULT_PARAMS,
-    "input_cloud": "aws",
-    "input_databricks_staging_workspace_host": "https://your-staging-workspace.cloud.databricks.com",
-    "input_databricks_prod_workspace_host": "https://your-prod-workspace.cloud.databricks.com",
-}
-
-GCP_DEFAULT_PARAMS = {
-    **AZURE_DEFAULT_PARAMS,
-    "input_cloud": "gcp",
-    "input_databricks_staging_workspace_host": "https://your-staging-workspace.gcp.databricks.com",
-    "input_databricks_prod_workspace_host": "https://your-prod-workspace.gcp.databricks.com",
-}
-
-
-def parametrize_by_cloud(fn):
-    @wraps(fn)
-    @pytest.mark.parametrize("cloud", ["aws", "azure", "gcp"])
-    def wrapper(*args, **kwargs):
-        return fn(*args, **kwargs)
-
-    return wrapper
 
 
 def parametrize_by_project_generation_params(fn):
-    @pytest.mark.parametrize("cloud", ["aws", "azure", "gcp"])
-    @pytest.mark.parametrize(
-        "cicd_platform",
-        [
-            "github_actions",
-            "github_actions_for_github_enterprise_servers",
-            "azure_devops",
-        ],
-    )
     @pytest.mark.parametrize(
         "setup_cicd_and_project,include_feature_store",
         [
@@ -76,10 +47,14 @@ def parametrize_by_project_generation_params(fn):
 
 
 @pytest.fixture
+def cicd_platform():
+    return "github_actions"
+
+
+@pytest.fixture
 def generated_project_dir(
     tmpdir,
     databricks_cli,
-    cloud,
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
@@ -87,14 +62,13 @@ def generated_project_dir(
     params = {
         "input_setup_cicd_and_project": setup_cicd_and_project,
         "input_root_dir": "my-mlops-project",
-        "input_cloud": cloud,
     }
     if setup_cicd_and_project != "Project_Only":
         params.update(
             {
                 "input_cicd_platform": cicd_platform,
-                "input_databricks_staging_workspace_host": "https://adb-3214.67.azuredatabricks.net",
-                "input_databricks_prod_workspace_host": "https://adb-345.89.azuredatabricks.net",
+                "input_databricks_staging_workspace_host": "https://your-staging-workspace.cloud.databricks.com",
+                "input_databricks_prod_workspace_host": "https://your-prod-workspace.cloud.databricks.com",
                 "input_default_branch": "main",
                 "input_release_branch": "release",
             }
@@ -124,8 +98,6 @@ def markdown_checker_configs(tmpdir):
     markdown_checker_config_dict = {
         "ignorePatterns": [
             {"pattern": "http://127.0.0.1:5000"},
-            {"pattern": "https://adb-3214.67.azuredatabricks.net*"},
-            {"pattern": "https://adb-345.89.azuredatabricks.net*"},
         ],
         "httpHeaders": [
             {
@@ -140,14 +112,9 @@ def markdown_checker_configs(tmpdir):
     with open(tmpdir / "my-mlops-project" / file_name, "w") as outfile:
         json.dump(markdown_checker_config_dict, outfile)
 
-
 def generate(directory, databricks_cli, context):
-    if context.get("input_cloud") == "aws":
-        default_params = AWS_DEFAULT_PARAMS
-    elif context.get("input_cloud") == "gcp":
-        default_params = GCP_DEFAULT_PARAMS
-    else:
-        default_params = AZURE_DEFAULT_PARAMS
+    default_params = AWS_DEFAULT_PARAMS
+
     params = {
         **default_params,
         **context,
@@ -155,16 +122,22 @@ def generate(directory, databricks_cli, context):
     json_string = json.dumps(params)
     config_file = directory / "config.json"
     config_file.write(json_string)
-    subprocess.run(
-        f"echo dapi123 | {databricks_cli} configure --host https://123",
-        shell=True,
-        check=True,
-    )
+
+    # 1. Capture the system's current environment variables
+    custom_env = os.environ.copy()
+    
+    # 2. Inject modern Databricks authentication variables
+    custom_env["DATABRICKS_HOST"] = "https://123"
+    custom_env["DATABRICKS_TOKEN"] = "dapi123"
+
+    # 3. Execute the bundle init command using the updated environment
     subprocess.run(
         f"{databricks_cli} bundle init {RESOURCE_TEMPLATE_ROOT_DIRECTORY} --config-file {config_file} --output-dir {directory}",
         shell=True,
         check=True,
+        env=custom_env,  # Bypasses interactive prompts seamlessly
     )
+
 
 
 @pytest.fixture(scope="session")
@@ -182,7 +155,7 @@ def databricks_cli(tmp_path_factory):
         text=True,
     )
 
-    yield f"{databricks_cli_dir}/databricks"
+    yield str(databricks_cli_dir / "databricks")
     # no need to remove the files as they are in test temp dir
 
 

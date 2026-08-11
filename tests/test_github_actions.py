@@ -9,7 +9,6 @@ from functools import wraps
 from utils import (
     databricks_cli,
     generated_project_dir,
-    parametrize_by_cloud,
 )
 
 # Pinned actionlint release. The binary is verified against the known-good
@@ -79,8 +78,7 @@ def _install_actionlint(dest_dir):
         ("CICD_Only", "no"),
     ],
 )
-@parametrize_by_cloud
-def test_generated_yaml_format(cloud, generated_project_dir):
+def test_generated_yaml_format(generated_project_dir):
     # Note: actionlint only works when the directory is a git project. Thus we begin by initiatilizing
     # the generated mlops project with git.
     project_dir = generated_project_dir / "my-mlops-project"
@@ -108,8 +106,7 @@ def test_generated_yaml_format(cloud, generated_project_dir):
         ("CICD_and_Project", "yes"),
     ],
 )
-@parametrize_by_cloud
-def test_run_unit_tests_workflow(cloud, generated_project_dir):
+def test_run_unit_tests_workflow(generated_project_dir):
     """Test that the GitHub workflow for running unit tests in the materialized project passes"""
     # We only test the unit test workflow, as it's the only one that doesn't require
     # Databricks REST API

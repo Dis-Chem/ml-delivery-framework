@@ -11,13 +11,7 @@ on:
 
 env:
   DATABRICKS_HOST: {{template `databricks_staging_workspace_host` .}}
-  {{ if (eq .input_cloud `azure`) -}}
-  ARM_TENANT_ID: {{`${{ secrets.STAGING_AZURE_SP_TENANT_ID }}`}}
-  ARM_CLIENT_ID: {{`${{ secrets.STAGING_AZURE_SP_APPLICATION_ID }}`}}
-  ARM_CLIENT_SECRET: {{`${{ secrets.STAGING_AZURE_SP_CLIENT_SECRET }}`}}
-  {{ else -}}
   DATABRICKS_TOKEN: {{`${{ secrets.STAGING_WORKSPACE_TOKEN }}`}}
-  {{- end }}
 
 jobs:
   cicd:
@@ -42,12 +36,6 @@ jobs:
         id: unzip
         run: |
           tar -xzvf cicd.tar.gz
-          INPUT_CLOUD_1=$(jq -r '.input_cloud' cicd_params.json)
-          INPUT_CLOUD_2=$(jq -r '.input_cloud' "$PROJECT_NAME_ALPHA/project_params.json")
-          if [ "$INPUT_CLOUD_1" != "$INPUT_CLOUD_2" ]; then
-            printf "Error: CICD cloud '%s' does not match project cloud '%s'\n" "$INPUT_CLOUD_1" "$INPUT_CLOUD_2"
-            exit 1
-          fi
           printf '%s' "$(jq '. += {"input_project_name":"{{`${{ github.event.inputs.project_name }}`}}"}' cicd_params.json)" > cicd_params.json
           printf '%s' "$(jq -s '.[0] + .[1]' cicd_params.json "$PROJECT_NAME_ALPHA/project_params.json")" > cicd_params.json
       - name: Update databricks.yml

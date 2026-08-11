@@ -13,3 +13,4 @@ __pycache__/
 .cache
 *.pyc
 mlops-stacks.iml
+tmp/

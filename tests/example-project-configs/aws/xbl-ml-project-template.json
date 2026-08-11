@@ -1,0 +1,17 @@
+{
+  "input_setup_cicd_and_project": "Project_Only",
+  "input_root_dir": "projects",
+  "input_project_name": "example-aws-github-project",
+  "input_cloud": "aws",
+  "input_cicd_platform": "github_actions",
+  "input_databricks_test_workspace_host": "https://dbc-26cf5e15-d40d.cloud.databricks.com",
+  "input_databricks_staging_workspace_host": "https://dbc-9f6e09b3-ca38.cloud.databricks.com",
+  "input_databricks_prod_workspace_host": "https://dbc-cd0b5c83-b24b.cloud.databricks.com",
+  "input_default_branch": "main",
+  "input_release_branch": "release",
+  "input_read_user_group": "users",
+  "input_include_feature_store": "yes",
+  "input_schema_name": "test_project_schema_name",
+  "input_unity_catalog_read_user_group": "account users",
+  "input_inference_table_name": "dummy.schema.table"
+}
