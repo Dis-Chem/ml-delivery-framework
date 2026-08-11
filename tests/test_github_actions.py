@@ -14,7 +14,6 @@ from utils import (
 # Pinned actionlint release. The binary is verified against the known-good
 # SHA256 published in the release's checksums.txt before it is executed, so a
 # compromised/retagged upstream cannot inject code into CI.
-# Source: https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_checksums.txt
 ACTIONLINT_VERSION = "1.7.12"
 ACTIONLINT_SHA256 = {
     "darwin_amd64": "5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c644",
@@ -73,12 +72,13 @@ def _install_actionlint(dest_dir):
         ("CICD_Only", "no"),
     ],
 )
-def test_generated_yaml_format(generated_project_dir):
-    # Note: actionlint only works when the directory is a git project. Thus we begin by initiatilizing
+# Explicitly added template_path to unlock the conftest matrix loop mapping
+def test_generated_yaml_format(generated_project_dir, template_path):
+    # Note: actionlint only works when the directory is a git project. Thus we begin by initializing
     # the generated mlops project with git.
     project_dir = generated_project_dir / "my-mlops-project"
-    # Install a pinned, checksum-verified actionlint instead of piping a script
-    # fetched from a mutable branch straight into bash.
+    
+    # Install a pinned, checksum-verified actionlint
     actionlint = _install_actionlint(generated_project_dir)
     subprocess.run("git init", shell=True, check=True, cwd=project_dir)
     subprocess.run(
@@ -101,17 +101,25 @@ def test_generated_yaml_format(generated_project_dir):
         ("CICD_and_Project", "yes"),
     ],
 )
-def test_run_unit_tests_workflow(generated_project_dir):
+# Explicitly added template_path to unlock the conftest matrix loop mapping
+def test_run_unit_tests_workflow(generated_project_dir, template_path):
     """Test that the GitHub workflow for running unit tests in the materialized project passes"""
-    # We only test the unit test workflow, as it's the only one that doesn't require
-    # Databricks REST API
+    project_dir = generated_project_dir / "my-mlops-project"
+    
+    # Dynamic wildcard search for the generated test workflow file.
+    # This prevents failures if template variants name their workflows differently.
+    workflows_dir = project_dir / ".github" / "workflows"
+    workflow_files = list(workflows_dir.glob("*-run-tests.yml"))
+    
+    if not workflow_files:
+        pytest.fail(f"No run-tests workflow found in {workflows_dir} for template {template_path}")
+    
+    target_workflow = workflow_files[0].name
+
     subprocess.run(
-        """
-        git init
-        act -s GITHUB_TOKEN workflow_dispatch --workflows .github/workflows/my-mlops-project-run-tests.yml -j "unit_tests"
-        """,
+        f"git init && act -s GITHUB_TOKEN workflow_dispatch --workflows .github/workflows/{target_workflow} -j 'unit_tests'",
         shell=True,
         check=True,
         executable="/bin/bash",
-        cwd=(generated_project_dir / "my-mlops-project"),
+        cwd=project_dir,
     )
