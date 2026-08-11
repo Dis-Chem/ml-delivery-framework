@@ -6,9 +6,7 @@ from utils import cicd_platform, generated_project_dir, databricks_cli
 __all__ = ["cicd_platform", "generated_project_dir", "databricks_cli"]
 
 # Define the absolute master list of all templates tracked by this monorepo
-ALL_MONOREPO_TEMPLATES = [
-    "mlops-stacks"
-]
+ALL_MONOREPO_TEMPLATES = ["mlops-stacks"]
 
 
 def pytest_addoption(parser):
@@ -55,7 +53,7 @@ def pytest_runtest_setup(item):
 
 def pytest_generate_tests(metafunc):
     """
-    Dynamically generates separate matrix test cases for any fixture or test 
+    Dynamically generates separate matrix test cases for any fixture or test
     function requiring the 'template_path' argument.
     """
     if "template_path" in metafunc.fixturenames:
@@ -68,9 +66,7 @@ def pytest_generate_tests(metafunc):
             )
         else:
             # Isolated Mode: Run only against the user-specified subfolder
-            metafunc.parametrize(
-                "template_path", [specified_path], scope="function"
-            )
+            metafunc.parametrize("template_path", [specified_path], scope="function")
 
 
 @pytest.fixture

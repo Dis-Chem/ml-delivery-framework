@@ -67,10 +67,12 @@ def assert_no_disallowed_strings_in_files(
     for path in test_paths:
         assert_no_disallowed_strings(path)
 
+
 # Helper function to dynamically calculate template directories before project creation
 def get_source_template_dir(template_path_str):
     repo_root = pathlib.Path(__file__).parent.parent
     return repo_root / template_path_str / "template"
+
 
 @parametrize_by_project_generation_params
 def test_no_template_strings_after_param_substitution(generated_project_dir):
@@ -86,9 +88,7 @@ def test_no_template_strings_after_param_substitution(generated_project_dir):
 
 def test_no_databricks_workspace_urls(template_path):
     template_dir = get_source_template_dir(template_path)
-    test_paths = [
-        os.path.join(template_dir, path) for path in paths(template_dir)
-    ]
+    test_paths = [os.path.join(template_dir, path) for path in paths(template_dir)]
     assert_no_disallowed_strings_in_files(
         file_paths=test_paths,
         disallowed_strings=["://databricks.com"],
@@ -126,7 +126,6 @@ def test_markdown_links(generated_project_dir):
     )
 
 
-
 @pytest.mark.parametrize(
     "invalid_params",
     [
@@ -148,7 +147,9 @@ def test_generate_fails_with_invalid_params(
 
 
 @pytest.mark.parametrize("valid_params", [{}])
-def test_generate_succeeds_with_valid_params(tmpdir, databricks_cli, valid_params, template_path):
+def test_generate_succeeds_with_valid_params(
+    tmpdir, databricks_cli, valid_params, template_path
+):
     generate(tmpdir, databricks_cli, valid_params, template_path)
 
 
@@ -233,7 +234,7 @@ def test_generate_project_check_feature_store_output(
     cicd_platform,
     setup_cicd_and_project,
     include_feature_store,
-    template_path
+    template_path,
 ):
     """
     Asserts the behavior of feature store-related artifacts when generating MLOps Stacks.
@@ -287,7 +288,9 @@ def test_workspace_dir_strip_query_params(
     assert f"\ndatabricks_prod_workspace_host={workspace_host}\n" in test_file_contents
 
 
-def test_generate_project_default_project_name_params(tmpdir, databricks_cli, template_path):
+def test_generate_project_default_project_name_params(
+    tmpdir, databricks_cli, template_path
+):
     # Asserts default parameter values for parameters that involve the project name
     generate(tmpdir, databricks_cli, context={}, template_path=template_path)
     readme_contents = (tmpdir / DEFAULT_PROJECT_NAME / "README.md").read_text("utf-8")

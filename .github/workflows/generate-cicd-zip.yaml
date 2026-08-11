@@ -1,31 +1,31 @@
 name: Generate CICD Zip
 on:
-  push:
+  pull_request:
     branches:
       - main
     paths:
-      # Watch all template subdirectories for changes to their internal github workflow templates
-      - '*/template/.github/workflows/**'
+      # Watch ALL files inside any template root directory
+      - '*/template/**'
+      # Ignore the generated archive itself to prevent an infinite loop
+      - '!**/cicd.tar.gz'
 
-# Scoped to what the PR-creation flow needs; no long-lived PAT. The regenerated
-# tarball is proposed as a reviewable PR rather than pushed straight to main.
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   detect-and-generate-zip:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
-      # Step 1: Programmatically detect which template subfolders actually changed in this push
+      # Step 1: Detect which top-level template subfolders actually changed
       - name: Detect Changed Templates
         id: changed-dirs
         run: |
-          # Use git diff to find which top-level template directories were modified
-          # e.g., output might be "batch-scoring" or "model-serving batch-scoring"
-          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E '^[^/]+/template/\.github/workflows/' | cut -d'/' -f1 | sort -u | tr '\n' ' ')
+          # Matches paths starting with <dir-name>/template/
+          CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E '^[^/]+/template/' | cut -d'/' -f1 | sort -u | tr '\n' ' ')
           echo "dirs=${CHANGED}" >> "$GITHUB_OUTPUT"
 
       # Step 2: Loop over every changed template subfolder and regenerate its localized cicd.tar.gz
@@ -35,34 +35,30 @@ jobs:
           for dir in ${{ steps.changed-dirs.outputs.dirs }}; do
             echo "Processing template directory: ${dir}"
             
-            # Navigate into the target directory's sub-template space
             cd "$dir/template"
             
-            # Core packaging logic matching your original script layout
-            # Using basic wildcard matching since template syntax markers vary per bundle implementation
+            # Ensure target directory path exists
+            mkdir -p cicd/template
+            
+            # Pack the workflows into the bundle matching original structure
             cp --parents .github/workflows/* cicd/template 2>/dev/null || true
             tar -czvf cicd.tar.gz cicd
             
-            # Return to repo root for next iteration loop
             cd -
           done
 
-      # Step 3: Open an automated PR with the updated binary archive files
-      - name: Open PR with regenerated CICD Zip
-        uses: peter-evans/create-pull-request@v7
+      # Step 3: Push the updated zip files directly back into the open PR branch
+      - name: Commit and Push Changes back to PR
         if: steps.changed-dirs.outputs.dirs != ''
-        with:
-          # Targets ONLY the regenerated archive files across whatever templates were modified
-          add-paths: |
-            **/cicd.tar.gz
-          commit-message: "Generate CICD Zip Files for ${{ github.sha }}"
-          branch: auto/regenerate-cicd-zips
-          delete-branch: true
-          title: "Regenerate Monorepo CICD Zips for ${{ github.sha }}"
-          body: |
-            Automated regeneration of template execution binaries (`cicd.tar.gz`) triggered by structural edits to CI/CD workflows inside:
-            `${{ steps.changed-dirs.outputs.dirs }}`
-            
-            Review the generated build diffs and merge to keep checked-in distribution archives synchronized.
-          committer: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
-          author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@://github.com"
+          
+          git add **/cicd.tar.gz
+          
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(cicd): auto-regenerate cicd.tar.gz due to template modifications"
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          else
+            echo "No archive payload variations detected. Skipping commit."
+          fi

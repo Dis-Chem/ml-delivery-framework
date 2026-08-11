@@ -64,9 +64,7 @@ def _install_actionlint(dest_dir):
     return binary
 
 
-@pytest.mark.parametrize(
-    "cicd_platform", ["github_actions"]
-)
+@pytest.mark.parametrize("cicd_platform", ["github_actions"])
 @pytest.mark.parametrize(
     "setup_cicd_and_project,include_feature_store",
     [
@@ -95,9 +93,7 @@ def test_generated_yaml_format(generated_project_dir):
     shutil.which("act") is None and not os.environ.get("CI"),
     reason="`act` is not installed. CI installs it, so this only skips locally.",
 )
-@pytest.mark.parametrize(
-    "cicd_platform", ["github_actions"]
-)
+@pytest.mark.parametrize("cicd_platform", ["github_actions"])
 @pytest.mark.parametrize(
     "setup_cicd_and_project,include_feature_store",
     [
