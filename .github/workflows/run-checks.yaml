@@ -32,7 +32,8 @@ jobs:
         with:
           python-version: '3.9'
           cache: 'pip' # Speeds up subsequent workflow runs
-          
+          cache-dependency-path: dev-requirements.txt
+
       - name: Install act
         env:
           # Pinned release + known-good SHA256 of the release binary (no install
