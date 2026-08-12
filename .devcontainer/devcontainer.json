@@ -8,7 +8,10 @@
     // `npm install -g` works without sudo.
     "ghcr.io/devcontainers/features/node:1": {
       "version": "lts"
-    }
+    },
+    // Installs the GitHub CLI, which can be useful when working with workflows,
+    // and provides an alternative channel for extension ecosystem updates.
+    "ghcr.io/devcontainers/features/github-cli:1": "latest"
   },
   "customizations": {
     "vscode": {
@@ -20,10 +23,12 @@
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
-        "databricks.databricks"
+        "databricks.databricks",
+        "github.vscode-github-actions"
       ]
     }
   },
+  
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "remoteUser": "vscode",
   "updateRemoteUserUidDefault": "on"
