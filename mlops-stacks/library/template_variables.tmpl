@@ -1,22 +1,14 @@
 # define template variables
 {{ define `databricks_prod_workspace_host` -}}
-    {{- if not (eq (print .input_databricks_prod_workspace_host) "") -}}
-        {{- with url (print .input_databricks_prod_workspace_host) -}}
-            {{ print .Scheme `://` .Host }}
-        {{- end -}}
-    {{- else -}}
-        https://your-prod-workspace.cloud.databricks.com
-    {{- end -}}
+        https://dbc-cd0b5c83-b24b.cloud.databricks.com
 {{- end }}
 
 {{ define `databricks_staging_workspace_host` -}}
-    {{- if not (eq (print .input_databricks_staging_workspace_host) "") -}}
-        {{- with url (print .input_databricks_staging_workspace_host) -}}
-            {{- print .Scheme `://` .Host -}}
-        {{- end -}}
-    {{- else -}}
-        https://your-staging-workspace.cloud.databricks.com
-    {{- end -}}
+        https://dbc-9f6e09b3-ca38.cloud.databricks.com
+{{- end }}
+
+{{ define `databricks_test_workspace_host` -}}
+        https://dbc-26cf5e15-d40d.cloud.databricks.com
 {{- end }}
 
 {{ define `cloud_specific_node_type_id` -}}

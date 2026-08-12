@@ -2,19 +2,6 @@
 {{ $project_name_alphanumeric_underscore := (regexp `-`).ReplaceAllString ((regexp `[^A-Za-z0-9_-]`).ReplaceAllString .input_project_name ``) `_` -}}
 {{ $root_dir := .input_root_dir}}
 
-{{ if (eq .input_setup_cicd_and_project `Project_Only`) }}
-    {{ skip (printf `%s/%s` $root_dir `.github`) }}
-    {{ skip (printf `%s/%s` $root_dir `docs`) }}
-    {{ skip (printf `%s/%s` $root_dir `.gitignore`) }}
-    {{ skip (printf `%s/%s` $root_dir `README.md`) }}
-    {{ skip (printf `%s/%s` $root_dir `test-requirements.txt`) }}
-    {{ skip (printf `%s/%s` $root_dir `cicd.tar.gz`) }}
-    {{ skip (printf `%s/%s` $root_dir `cicd_params.json`) }}
-{{ else if (eq .input_setup_cicd_and_project `CICD_Only`) }}
-    {{ skip (printf `%s/%s` $root_dir $project_name_alphanumeric_underscore) }}
-    {{ skip (printf `%s/%s/%s-*` $root_dir `.github/workflows` .input_project_name) }}
-{{ end }}
-
 {{ if (not (eq .input_project_name `27896cf3-bb3e-476e-8129-96df0406d5c7`)) }}
     {{ skip (printf `%s/%s` $root_dir `_params_testing_only.txt`) }}
 {{ end }}

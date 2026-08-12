@@ -1,9 +1,9 @@
 # tests/conftest.py
 import pytest
-from utils import cicd_platform, generated_project_dir, databricks_cli
+from utils import generated_project_dir, databricks_cli
 
 # Re-export fixtures cleanly for the test suite
-__all__ = ["cicd_platform", "generated_project_dir", "databricks_cli"]
+__all__ = ["generated_project_dir", "databricks_cli"]
 
 # Define the absolute master list of all templates tracked by this monorepo
 ALL_MONOREPO_TEMPLATES = ["mlops-stacks"]

@@ -38,24 +38,3 @@ targets:
     workspace:
       # TODO: add dev workspace URL
       host: 
-
-{{- if (eq .input_setup_cicd_and_project `CICD_and_Project`)}}
-
-  staging:
-    variables:
-      catalog_name: {{ .input_staging_catalog_name }}
-    workspace:
-      host: {{template `databricks_staging_workspace_host` .}}
-
-  prod:
-    variables:
-      catalog_name: {{ .input_prod_catalog_name }}
-    workspace:
-      host: {{template `databricks_prod_workspace_host` .}}
-
-  test:
-    variables:
-      catalog_name: {{ .input_test_catalog_name }}
-    workspace:
-      host: {{template `databricks_staging_workspace_host` .}}
-{{ end }}

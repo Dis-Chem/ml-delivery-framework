@@ -176,9 +176,6 @@ logic in `features` and run the feature engineering pipeline in the `GenerateAnd
 We expect a catalog to exist with the name of the deployment target by default.
 For example, if the deployment target is dev, we expect a catalog named dev to exist in the workspace.
 If you want to use different catalog names, please update the target names declared in the [databricks.yml](./databricks.yml) file.
-{{- if (eq .input_setup_cicd_and_project `CICD_and_Project`) }}
-If changing the staging, prod, or test deployment targets, you'll also need to update the workflows located in the .github/workflows directory.
-{{- end }}
 
 For the ML training job, you must have permissions to read the input Delta table and create experiment and models.
 i.e. for each environment:

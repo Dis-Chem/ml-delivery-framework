@@ -6,21 +6,6 @@
       "description": "Root Directory",
       "type": "string"
     },
-    "input_cicd_platform": {
-      "order": 3,
-      "description": "CICD Platform",
-      "type": "string"
-    },
-    "input_default_branch": {
-      "order": 4,
-      "description": "Default Branch",
-      "type": "string"
-    },
-    "input_release_branch": {
-      "order": 5,
-      "description": "Release Branch",
-      "type": "string"
-    },
     "cloud_specific_node_type_id": {
       "order": 6,
       "description": "Cloud Specific Node Type ID",
@@ -30,24 +15,6 @@
       "order": 7,
       "description": "CLI Version",
       "type": "string"
-    },
-    "input_test_catalog_name": {
-      "order": 8,
-      "type": "string",
-      "description": "\nName of the Test Unity Catalog",
-      "default": "test"
-    },
-    "input_staging_catalog_name": {
-      "order": 9,
-      "type": "string",
-      "description": "\nName of the Staging Unity Catalog",
-      "default": "staging"
-    },
-    "input_prod_catalog_name": {
-      "order": 10,
-      "type": "string",
-      "description": "\nName of the Prod Unity Catalog",
-      "default": "prod"
     },
     "input_project_name": {
       "order": 11,
