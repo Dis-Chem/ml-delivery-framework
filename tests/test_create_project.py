@@ -198,7 +198,7 @@ def test_generate_project_check_delta_output(
     )
     generate(tmpdir, databricks_cli, context=context, template_path=template_path)
     delta_notebook_path = (
-        tmpdir / TEST_PROJECT_DIRECTORY / TEST_PROJECT_NAME /  "training" / "Train.py"
+        tmpdir / TEST_PROJECT_DIRECTORY / TEST_PROJECT_NAME / "training" / "Train.py"
     )
     assert not os.path.isfile(delta_notebook_path)
 

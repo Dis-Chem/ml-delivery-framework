@@ -11,17 +11,14 @@ AWS_DEFAULT_PARAMS = {
     "input_include_feature_store": "no",
     "input_schema_name": "schema_name",
     "input_unity_catalog_read_user_group": "account users",
-    "input_inference_table_name": "dummy.schema.table"
+    "input_inference_table_name": "dummy.schema.table",
 }
 
 
 def parametrize_by_project_generation_params(fn):
     @pytest.mark.parametrize(
         "include_feature_store",
-        [
-            "no",
-            "yes"
-        ],
+        ["no", "yes"],
     )
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -48,9 +45,7 @@ def generated_project_dir(
 
 def markdown_checker_configs(tmpdir):
     markdown_checker_config_dict = {
-        "ignorePatterns": [
-            {"pattern": "http://127.0.0.1:5000"}
-        ],
+        "ignorePatterns": [{"pattern": "http://127.0.0.1:5000"}],
         "httpHeaders": [
             {
                 "urls": ["https://docs.github.com/"],
