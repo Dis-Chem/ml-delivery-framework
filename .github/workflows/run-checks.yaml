@@ -84,4 +84,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Pass the specific template directory down to your pytest framework
-          pytest ${{ matrix.template_dir }}/tests --large -vv --black --template-path=${{ matrix.template_dir }}
+          pytest tests --large -vv --black --template-path=${{ matrix.template_dir }}
