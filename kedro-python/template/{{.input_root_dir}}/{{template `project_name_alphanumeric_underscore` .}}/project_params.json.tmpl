@@ -1,0 +1,7 @@
+{
+  "project_name": "{{ .input_project_name }}",
+  "package_name": "{{template `project_name_alphanumeric_underscore` .}}",
+  "entry_point": "{{template `project_entrypoint` .}}",
+  "kedro_version": "{{ .input_kedro_version }}",
+  "schema_name": "{{ .input_schema_name }}"
+}

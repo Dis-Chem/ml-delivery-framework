@@ -1,0 +1,80 @@
+# {{ .input_root_dir }}
+
+This directory contains a [Kedro](https://docs.kedro.org) project wired to deploy and run
+on Databricks as an [asset bundle]({{ template `generate_doc_link` (map (pair "path" "dev-tools/bundles/index.html")) }}).
+Each Kedro node becomes a task in a Databricks job, so the same pipeline code runs locally
+and on a cluster.
+
+The job definitions are generated from the Kedro pipelines by
+[kedro-databricks](https://github.com/JenspederM/kedro-databricks), which means the
+Databricks workflow follows the pipeline rather than being maintained alongside it.
+
+## Code structure
+
+This project contains the following components:
+
+| Component            | Description                                                                                                                                                                                          |
+|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kedro pipelines      | Example ML pipeline code as unit-tested Python nodes, with a data catalog and parameters per environment                                                                                              |
+| ML Resources as Code | Databricks jobs, a Unity Catalog registered model, an MLflow experiment and an opt-in quality monitor, configured and deployed through [databricks CLI bundles]({{ template `generate_doc_link` (map (pair "path" "dev-tools/cli/bundle-cli.html")) }}) |
+
+contained in the following files:
+
+```
+{{ .input_root_dir }}        <- Root directory. Both monorepo and polyrepo are supported.
+│
+└── {{template `project_name_alphanumeric_underscore` .}}       <- One Kedro project: pipeline code, config and Databricks resources.
+    │
+    ├── databricks.yml          <- Bundle root file loaded by the databricks CLI. Defines the bundle
+    │                              name, variables, the wheel artifact, the conf sync rules, and the
+    │                              dev/staging/prod/test deployment targets.
+    │
+    ├── pyproject.toml          <- Project metadata. [project.scripts] declares the console script that
+    │                              the Databricks tasks invoke; [tool.kedro] declares the package name.
+    │
+    ├── requirements.txt        <- Runtime dependencies for the pipeline.
+    │
+    ├── conf                    <- Kedro configuration.
+    │   ├── base                <- Shared across every environment: catalog.yml, parameters.yml.
+    │   ├── local               <- Personal credentials and overrides. Not committed.
+    │   ├── dev, staging, prod, test
+    │   │                       <- One directory per deployment target. catalog.yml points datasets at
+    │   │                          that target's storage; databricks.yml holds the cluster, schedule and
+    │   │                          job-name overrides that are merged into resources/ at generation time.
+    │   └── logging.yml
+    │
+    ├── data                    <- Kedro's layered data directories. Real data lives in the workspace.
+    │
+    ├── src/{{template `project_name_alphanumeric_underscore` .}}
+    │   ├── pipeline_registry.py <- Discovers the pipelines under pipelines/.
+    │   ├── settings.py          <- Config loader setup, including the `databricks` config pattern.
+    │   └── pipelines            <- The pipelines themselves. Most development work happens here.
+    │       └── iris             <- Example pipeline: nodes.py and pipeline.py.
+    │
+    ├── monitoring              <- Notebooks used by the opt-in quality monitoring resource.
+    │
+    ├── notebooks               <- Ad-hoc notebooks.
+    │
+    ├── tests                   <- Unit tests for the pipelines.
+    │
+    └── resources               <- Databricks resource definitions.
+        ├── {{template `project_name_alphanumeric_underscore` .}}.yml
+        │                       <- GENERATED. Job for the `__default__` Kedro pipeline, one task per node.
+        ├── ml-artifacts-resource.yml
+        │                       <- Unity Catalog registered model and MLflow experiment.
+        └── monitoring/monitoring-resource.yml
+                                <- Opt-in quality monitor and retraining job. Nested one level down so
+                                   that it is not picked up by the `resources/*.yml` include glob.
+```
+
+## Using this repo
+
+If you are a data scientist starting a brand new ML project, adapt the example iris
+pipeline to your problem, then make and test changes locally before deploying. Follow the
+instructions in the [project README](./{{template `project_name_alphanumeric_underscore` .}}/README.md).
+
+| Role           | Goal                                                                   | Docs                                                                                                          |
+|----------------|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Data Scientist | Get started writing pipeline code for a brand new project              | [project README](./{{template `project_name_alphanumeric_underscore` .}}/README.md)                           |
+| Data Scientist | Add or change pipeline nodes and regenerate the Databricks jobs        | [ML resource config guide](./{{template `project_name_alphanumeric_underscore` .}}/resources/README.md)       |
+| MLOps / DevOps | Change compute, schedules, permissions or deployment targets           | [ML resource config guide](./{{template `project_name_alphanumeric_underscore` .}}/resources/README.md)       |

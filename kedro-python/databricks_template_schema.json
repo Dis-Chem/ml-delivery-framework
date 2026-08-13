@@ -1,0 +1,58 @@
+{
+  "welcome_message": "Welcome to X, bigly labs ML Delivery Templates. This template generates a Kedro project wired to deploy and run on Databricks as an asset bundle. For detailed information on project generation, see the README at https://github.com/databricks/mlops-stacks/blob/main/README.md.",
+  "min_databricks_cli_version": "v0.236.0",
+  "properties": {
+    "input_project_name": {
+      "order": 2,
+      "type": "string",
+      "default": "my_kedro_project",
+      "description": "\nProject Name. Default",
+      "pattern": "^[^ .\\\\/A-Z]{3,}$",
+      "pattern_match_failure_message": "Project name must be at least 3 characters long, must be lowercase, and cannot contain the following characters: \"\\\", \"/\", \" \" and \".\"."
+    },
+    "input_root_dir": {
+      "order": 3,
+      "type": "string",
+      "default": "projects",
+      "description": "\nRoot directory name.\nFor monorepos, name of the root directory that contains all the projects.\nDefault"
+    },
+    "input_kedro_version": {
+      "order": 4,
+      "type": "string",
+      "default": "1.0.0",
+      "description": "\nKedro version to pin the generated project to.\nUsed for the `kedro` dependency and `tool.kedro.kedro_init_version`.\nDefault",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "pattern_match_failure_message": "Kedro version must be a semantic version of the form \"number.number.number\", for example \"1.0.0\"."
+    },
+    "input_schema_name": {
+      "order": 15,
+      "type": "string",
+      "description": "\nName of schema to use when registering a model in Unity Catalog.\nThis schema must already exist and service principals must have access.\nWe recommend using the project name.\nDefault",
+      "default": "{{ .input_project_name }}",
+      "pattern": "^[^ .\\-\\/]*$",
+      "pattern_match_failure_message": "Valid schema names cannot contain any of the following characters: \" \", \".\", \"-\", \"\\\", \"/\""
+    },
+    "input_unity_catalog_read_user_group": {
+      "order": 16,
+      "type": "string",
+      "default": "account users",
+      "description": "\nUser group name to give EXECUTE privileges to models in Unity Catalog (UC).\nIt must exist in UC with access granted to the staging and prod workspaces.\nDefault"
+    },
+    "input_inference_table_name": {
+      "order": 17,
+      "type": "string",
+      "description": "\nFully qualified name of inference table to attach monitoring to.\nThis table must already exist and service principals must have access.",
+      "default": "dev.{{ .input_project_name }}.predictions",
+      "pattern": "^[^ .\\-\\/]+(\\.[^ .\\-\\/]+){2}$",
+      "pattern_match_failure_message": "Fully qualified Unity Catalog table names must have catalog, schema, and table separated by \".\" and each cannot contain any of the following characters: \" \", \".\", \"-\", \"\\\", \"/\""
+    },
+    "input_include_feature_store": {
+      "order": 18,
+      "type": "string",
+      "description": "\nWhether to include Feature Store. Reserved for parity with the mlops-stacks template; the Kedro template does not currently generate Feature Store components",
+      "default": "yes",
+      "enum": ["no", "yes"]
+    }
+  },
+  "success_message" : "\n*** Your Kedro project has been created in the '{{.input_root_dir}}/{{.input_project_name}}' directory! ***\n\nPlease refer to the README.md for instructions on running the pipelines locally and deploying them to Databricks."
+}
