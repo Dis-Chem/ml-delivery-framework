@@ -34,7 +34,7 @@ CONFIG_LOADER_ARGS = {
         # Read by `kedro databricks bundle`, which merges conf/<env>/databricks.yml
         # into the generated job definitions under resources/.
         "databricks": ["databricks*", "databricks/**"],
-    }
+    },
 }
 
 # Class that manages Kedro's library components.
