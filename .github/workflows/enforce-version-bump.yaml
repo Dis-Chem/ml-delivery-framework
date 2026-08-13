@@ -47,6 +47,12 @@ jobs:
             if [ "$NEW_VERSION" = "null" ]; then
               echo "❌ Error: Template folder '${dir}' was modified, but is completely missing from manifest.json."
               ERRORS_FOUND=$((ERRORS_FOUND + 1))
+
+            # 4. Validate version format matches number.number.number (e.g., 1.0.4 or 12.0.15)
+            elif [[ ! "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "❌ Error: Template '${dir}' has an invalid version format: '${NEW_VERSION}'."
+              echo "   Version must strictly follow the standard 'number.number.number' (Semantic Versioning) format (e.g., 1.0.0)."
+              ERRORS_FOUND=$((ERRORS_FOUND + 1))
             
             # 4. Block if changes were made but the version string matches the main branch exactly
             elif [ "$NEW_VERSION" = "$OLD_VERSION" ]; then
