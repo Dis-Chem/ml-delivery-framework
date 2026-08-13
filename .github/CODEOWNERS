@@ -4,11 +4,7 @@
 # from Code Owners") on the default branch to enforce.
 
 # CI/CD workflows — highest-value supply-chain surface.
-/.github/            @veenaramesh @alexbaur @sdonohoo-db
-/.github/workflows/  @veenaramesh @alexbaur @sdonohoo-db
+/.github/            @annemariebester6
+/.github/workflows/  @annemariebester6
 
-# Test harness that fetches and executes external tooling in CI.
-/tests/install.sh             @veenaramesh @alexbaur @sdonohoo-db
-
-# Dependency manifests.
-/dev-requirements.txt @veenaramesh @alexbaur @sdonohoo-db
+/.mlops-stacks/        @annemariebester6
