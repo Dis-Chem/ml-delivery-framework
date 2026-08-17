@@ -4,9 +4,19 @@ set -euo pipefail
 # Navigate to the project repository root relative to this script
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-echo "Upgrading package managers and tools..."
-python -m pip install --upgrade pip
-pip install databricks-cli
-pip install -r dev-requirements.txt
+echo "Creating Python virtual environment..."
+# 1. Initialize an isolated virtual environment matching the container's Python 3.9
+uv venv
+
+# 2. Activate the virtual environment for the rest of the script
+source .venv/bin/activate
+
+echo "Installing project and development dependencies from pyproject.toml..."
+# 3. Fast-install the local project in editable mode along with its 'dev' dependency group
+uv pip install -e .[dev]
+
+echo "Installing complementary CLI tools..."
+# 4. Install complementary dependencies inside the virtual environment
+uv pip install databricks-cli
 
 echo "Post-create environment configuration completed successfully!"
