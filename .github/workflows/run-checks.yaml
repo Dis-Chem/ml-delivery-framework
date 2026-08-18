@@ -37,51 +37,22 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: '3.9'
-          cache: 'pip' # Speeds up subsequent workflow runs
-          cache-dependency-path: dev-requirements.txt
+          version: "latest"
+          enable-cache: true
+          # This ensures uv locks to the pyproject.toml in the matrix directory
+          cache-dependency-glob: "${{ matrix.template_dir }}/pyproject.toml"
 
-      - name: Install act
-        env:
-          # Pinned release + known-good SHA256 of the release binary (no install
-          # script, no mutable branch). Runner is always ubuntu x86_64.
-          ACT_VERSION: v0.2.89
-          ACT_TARBALL: act_Linux_x86_64.tar.gz
-          ACT_SHA256: 0191d6f1f3b716b5c55820032605d05fc3c1cdbf581ebeff655019e5dd1524c0
+      - name: Install dependencies
         run: |
-          mkdir -p "$HOME/.local/bin"
-          curl -fsSL -o /tmp/act.tar.gz \
-            "https://github.com/nektos/act/releases/download/${ACT_VERSION}/${ACT_TARBALL}"
-          echo "${ACT_SHA256}  /tmp/act.tar.gz" | sha256sum -c -
-          tar -xzf /tmp/act.tar.gz -C "$HOME/.local/bin" act
-          chmod +x "$HOME/.local/bin/act"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          
-          echo "-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest@sha256:5d6a17640b25694988b9db5a4145537b9918e5430116b2cf90d84e837609b382
-          -P ubuntu-20.04=ghcr.io/catthehacker/ubuntu:act-20.04@sha256:29b5352bd8a624bc3332299489548da8aa2831ca39a97a9bc760d27b77aa593a
-          -P ubuntu-18.04=ghcr.io/catthehacker/ubuntu:act-18.04@sha256:a037e34e5a70667384b4941c90618ac1567d7454de572ba0c4420a1cc38cbaa0" > ~/.actrc
+          # Change to the template directory and sync
+          cd ${{ matrix.template_dir }}
+          uv sync --all-extras --dev
 
-      - name: Install Python dependencies
+      - name: Run tests
         run: |
-            python -m pip install --upgrade pip
-            pip install -r dev-requirements.txt
-
-      - name: Generate CICD Zip
-        run: |
-          cd ${{ matrix.template_dir }}/template
-          # Dynamic fallback check in case individual templates customize internal structures
-          if [ -d "cicd" ]; then
-            cp --parents .github/workflows/* cicd/template/ 2>/dev/null || true
-            tar -czvf cicd.tar.gz cicd
-            rm -rf cicd/template/.github
-          fi
-          cd -
-
-      - name: Run tests with pytest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Pass the specific template directory down to your pytest framework
-          pytest tests --large -vv --black --template-path=${{ matrix.template_dir }}
+          # Change to the template directory and run tests
+          cd ${{ matrix.template_dir }}
+          uv run pytest
