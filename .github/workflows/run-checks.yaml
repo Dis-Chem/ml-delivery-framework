@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         # Fix: Force uv to look inside the specific template directory
         run: |
-          uv sync --all-extras --dev --project "${{ matrix.template_dir }}"
+          uv sync --all-extras --dev
 
       - name: Run tests
         # Fix: Execute pytest with the template directory scoped flag
