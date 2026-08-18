@@ -7,7 +7,7 @@ dependencies = [
     "databricks>=0.2.0",
     "mlflow>=3.1,<4",
     "pandas>=2.3.3",
-    "pyspark>=3.5.0", 
+    "pyspark>=3.5.0",
 ]
 
 [project.optional-dependencies]
@@ -16,3 +16,7 @@ dev = [
     "kedro[jupyter]>=1.0.0",
     "kedro-datasets[spark,pandas,spark-sparkdataset,pandas-parquetdataset]>=9.1",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = ["kedro-python", "mlops-stacks"]
