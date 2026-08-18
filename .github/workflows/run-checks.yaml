@@ -42,17 +42,15 @@ jobs:
         with:
           version: "latest"
           enable-cache: true
-          # This ensures uv locks to the pyproject.toml in the matrix directory
-          cache-dependency-glob: "pyproject.toml"
+          # Fix: Scope the cache dependency to the specific matrix template directory
+          cache-dependency-glob: "${{ matrix.template_dir }}/pyproject.toml"
 
       - name: Install dependencies
+        # Fix: Force uv to look inside the specific template directory
         run: |
-          # Change to the template directory and sync
-          cd ${{ matrix.template_dir }}
-          uv sync --all-extras --dev
+          uv sync --all-extras --dev --project "${{ matrix.template_dir }}"
 
       - name: Run tests
+        # Fix: Execute pytest with the template directory scoped flag
         run: |
-          # Change to the template directory and run tests
-          cd ${{ matrix.template_dir }}
-          uv run pytest
+          uv run pytest --template-path="${{ matrix.template_dir }}"

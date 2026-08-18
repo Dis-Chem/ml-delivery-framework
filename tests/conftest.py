@@ -5,9 +5,6 @@ from utils import generated_project_dir, databricks_cli
 # Re-export fixtures cleanly for the test suite
 __all__ = ["generated_project_dir", "databricks_cli"]
 
-# Define the absolute master list of all templates tracked by this monorepo
-ALL_MONOREPO_TEMPLATES = ["mlops-stacks"]
-
 
 def pytest_addoption(parser):
     # 1. Retain the MLflow markers
@@ -61,9 +58,7 @@ def pytest_generate_tests(metafunc):
 
         if specified_path == "all":
             # Matrix Mode: Run the test against EVERY template variant sequentially
-            metafunc.parametrize(
-                "template_path", ALL_MONOREPO_TEMPLATES, scope="function"
-            )
+            metafunc.parametrize("template_path", ".", scope="function")
         else:
             # Isolated Mode: Run only against the user-specified subfolder
             metafunc.parametrize("template_path", [specified_path], scope="function")
