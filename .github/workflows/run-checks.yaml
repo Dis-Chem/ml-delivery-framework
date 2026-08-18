@@ -43,7 +43,7 @@ jobs:
           version: "latest"
           enable-cache: true
           # This ensures uv locks to the pyproject.toml in the matrix directory
-          cache-dependency-glob: "${{ matrix.template_dir }}/pyproject.toml"
+          cache-dependency-glob: "pyproject.toml"
 
       - name: Install dependencies
         run: |
