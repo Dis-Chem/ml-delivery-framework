@@ -5,6 +5,9 @@ from utils import generated_project_dir, databricks_cli
 # Re-export fixtures cleanly for the test suite
 __all__ = ["generated_project_dir", "databricks_cli"]
 
+# Template directories to test
+TEMPLATE_PATHS = ["kedro-python", "mlops-stacks"]
+
 
 def pytest_addoption(parser):
     # 1. Retain the MLflow markers
@@ -58,7 +61,7 @@ def pytest_generate_tests(metafunc):
 
         if specified_path == "all":
             # Matrix Mode: Run the test against EVERY template variant sequentially
-            metafunc.parametrize("template_path", ".", scope="function")
+            metafunc.parametrize("template_path", TEMPLATE_PATHS, scope="function")
         else:
             # Isolated Mode: Run only against the user-specified subfolder
             metafunc.parametrize("template_path", [specified_path], scope="function")
