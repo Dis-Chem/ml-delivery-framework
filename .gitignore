@@ -14,3 +14,4 @@ __pycache__/
 *.pyc
 mlops-stacks.iml
 tmp/
+ml_delivery_framework.egg-info/
