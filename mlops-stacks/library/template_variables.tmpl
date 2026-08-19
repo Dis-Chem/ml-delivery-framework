@@ -1,46 +1,18 @@
 # define template variables
 {{ define `databricks_prod_workspace_host` -}}
-    {{- if not (eq (print .input_databricks_prod_workspace_host) "") -}}
-        {{- with url (print .input_databricks_prod_workspace_host) -}}
-            {{ print .Scheme `://` .Host }}
-        {{- end -}}
-    {{- else -}}
-        {{- if eq .input_cloud `azure` -}}
-            https://adb-xxxx.xx.azuredatabricks.net
-        {{- else if eq .input_cloud `aws` -}}
-            https://your-prod-workspace.cloud.databricks.com
-        {{- else if eq .input_cloud `gcp` -}}
-            https://your-prod-workspace.gcp.databricks.com
-        {{- end -}}
-    {{- end -}}
+        https://dbc-cd0b5c83-b24b.cloud.databricks.com
 {{- end }}
 
 {{ define `databricks_staging_workspace_host` -}}
-    {{- if not (eq (print .input_databricks_staging_workspace_host) "") -}}
-        {{- with url (print .input_databricks_staging_workspace_host) -}}
-            {{- print .Scheme `://` .Host -}}
-        {{- end -}}
-    {{- else -}}
-        {{- if eq .input_cloud `azure` -}}
-            https://adb-xxxx.xx.azuredatabricks.net
-        {{- else if eq .input_cloud `aws` -}}
-            https://your-staging-workspace.cloud.databricks.com
-        {{- else if eq .input_cloud `gcp` -}}
-            https://your-staging-workspace.gcp.databricks.com
-        {{- end -}}
-    {{- end -}}
+        https://dbc-9f6e09b3-ca38.cloud.databricks.com
+{{- end }}
+
+{{ define `databricks_test_workspace_host` -}}
+        https://dbc-26cf5e15-d40d.cloud.databricks.com
 {{- end }}
 
 {{ define `cloud_specific_node_type_id` -}}
-    {{- if (eq .input_cloud `aws`) -}}
-        i3.xlarge
-    {{- else if (eq .input_cloud `azure`) -}}
-        Standard_D3_v2
-    {{- else if (eq .input_cloud `gcp`) -}}
-        n2-highmem-4
-    {{- else -}}
-        {{ fail `Unknown cloud platform` }}
-    {{- end -}}
+    i3.xlarge
 {{- end -}}
 
 {{ define `model_name` -}}
