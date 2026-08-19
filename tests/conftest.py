@@ -1,3 +1,4 @@
+# tests/conftest.py
 import pytest
 from utils import generated_project_dir, databricks_cli
 
