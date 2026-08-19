@@ -1,0 +1,26 @@
+{
+  "name": "ml-delivery-framework",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": "latest",
+    "ghcr.io/jsburckhardt/devcontainer-features/uv:1": "latest"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "databricks.databricks",
+        "github.vscode-github-actions"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "vscode",
+  "updateRemoteUserUidDefault": "on"
+}
