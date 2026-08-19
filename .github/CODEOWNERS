@@ -4,7 +4,8 @@
 # from Code Owners") on the default branch to enforce.
 
 # CI/CD workflows — highest-value supply-chain surface.
-/.github/            @annemariebester6
-/.github/workflows/  @annemariebester6
+# TODO: Create a github team to manage platform merges and ensure no unauthorised template changes are made
+# /.github/            @annemariebester6
+# /.github/workflows/  @annemariebester6
 
-/.mlops-stacks/        @annemariebester6
+# /.mlops-stacks/        @annemariebester6
