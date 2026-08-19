@@ -34,7 +34,8 @@ If changing the `uat` or `prod` deployment targets, make sure to update the corr
 
 | Deployment Target | Description                                                                                                                                                                                                                           | Databricks Workspace | Model Name                          | Experiment Name                                |
 |-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|-------------------------------------|------------------------------------------------|
-| dev_qa      | The `dev_qa` deployment target is used by ML engineers to deploy ML resources to development workspace with `dev_qa` configs. The config is for ML project development purposes.                                                     | dev workspace        | dev_qa-{{template `model_name` .}}     | /dev_qa-{{template `experiment_base_name` .}}     |
+| dev      | The `dev` deployment target is used for interactive development and iteration with `mode: development`. Deploy locally to this target for rapid testing and debugging.                                                     | dev workspace        | dev-{{template `model_name` .}}     | /dev-{{template `experiment_base_name` .}}     |
+| dev_qa      | The `dev_qa` deployment target is used by ML engineers to deploy ML resources to the shared development workspace with `dev_qa` configs. The config is for team development and QA purposes.                                                     | dev workspace        | dev_qa-{{template `model_name` .}}     | /dev_qa-{{template `experiment_base_name` .}}     |
 | uat         | The `uat` deployment target is used to deploy ML resources to the UAT workspace with `uat` config.                                                             | uat workspace    | uat-{{template `model_name` .}} | /uat-{{template `experiment_base_name` .}} |
 | prod        | The `prod` deployment target is used to deploy ML resources to the prod workspace with `prod` config.                                                                      | prod workspace       | prod-{{template `model_name` .}}    | /prod-{{template `experiment_base_name` .}}    |
 
@@ -127,12 +128,12 @@ violation threshold defined given the ground truth labels.
 
 Its central purpose is to track production model performances, feature distributions and comparing different versions.
 
-Monitoring contains four components:
+Monitoring contains three components:
 * [metric_violation_check_query.py](../monitoring/metric_violation_check_query.py) defines a query that checks for violation of the monitored metric.
-* [MonitoredMetricViolationCheck](../monitoring/MonitoredMetricViolationCheck.py) acts as an entry point, executing the violation check query against the monitored inference table.
-It emits a boolean value based on the query result.
-* [monitoring-resource.yml](./monitoring-resource.yml) contains the resource config, inputs parameters for monitoring, and orchestrates model retraining based on monitoring. It first runs the [MonitoredMetricViolationCheck](../monitoring/MonitoredMetricViolationCheck.py)
-entry point then decides whether to execute the model retraining workflow.
+* [MonitoredMetricViolationCheck.py](../monitoring/MonitoredMetricViolationCheck.py) acts as an entry point, executing the violation check query against the monitored inference table.
+It emits a task value based on the query result.
+* [monitoring-resource.yml](./monitoring-resource.yml) contains the resource config and input parameters for monitoring, and orchestrates model retraining based on monitoring. It first runs the [MonitoredMetricViolationCheck.py](../monitoring/MonitoredMetricViolationCheck.py)
+entry point then, if metric violation is detected, triggers the model retraining workflow.
 
 To set up and enable monitoring:
 * If it is not done already, generate inference table, join it with ground truth labels, and update the table name in [monitoring-resource.yml](./monitoring-resource.yml).
@@ -182,9 +183,9 @@ resources:
             environment_version: "5"
             dependencies:
               - databricks-sdk>=0.12.0
-              - mlflow>=3.1.0
+              - mlflow>=2.9.0
               - numpy>=1.23.0
-              - pandas>=2.3.3
+              - pandas>=1.5.0
               - pyspark>=3.5.0
               - scikit-learn>=1.3.0
 ```
@@ -241,9 +242,9 @@ resources:
             environment_version: "5"
             dependencies:
               - databricks-sdk>=0.12.0
-              - mlflow>=3.1.0
+              - mlflow>=2.9.0
               - numpy>=1.23.0
-              - pandas>=2.3.3
+              - pandas>=1.5.0
               - pyspark>=3.5.0
               - scikit-learn>=1.3.0
 ```

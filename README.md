@@ -50,7 +50,7 @@ https://github.com/databricks/mlops-stacks/assets/87999496/0d220d55-465e-4a69-bd
 ## Using MLOps Stacks
 
 ### Prerequisites
- - Python 3.11+
+ - Python 3.11
  - [Databricks CLI](https://docs.databricks.com/en/dev-tools/cli/databricks-cli.html) >= v0.236.0
 
 [Databricks CLI](https://docs.databricks.com/en/dev-tools/cli/databricks-cli.html) contains [Databricks asset bundle templates](https://docs.databricks.com/en/dev-tools/bundles/templates.html) for the purpose of project creation.
@@ -128,9 +128,8 @@ production model serving endpoints.
 ### I have an existing ML project. Can I productionize it using MLOps Stacks?
 Yes. Currently, you can instantiate a new project and copy relevant components
 into your existing project to productionize it. MLOps Stacks is modularized, so
-you can e.g. copy just the GitHub Actions workflows under `.github` or ML resource configs
- under ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/resources`` 
-and ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/databricks.yml`` into your existing project.
+you can e.g. copy just the ML resource configs under ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/resources`` 
+and ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/databricks.yml`` into your existing project. CI/CD workflows for the generated project are created during project initialization.
 
 ### Can I adopt individual components of MLOps Stacks?
 For this use case, we recommend instantiating via [Databricks asset bundle templates](https://docs.databricks.com/en/dev-tools/bundles/templates.html) 
@@ -167,9 +166,7 @@ the `{{.input_root_dir}}` directory.
 
 ### Installing development requirements
 
-To run tests, install [actionlint](https://github.com/rhysd/actionlint),
-[databricks CLI](https://docs.databricks.com/dev-tools/cli/databricks-cli.html), [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm), and
-[act](https://github.com/nektos/act). Then install the Python dependencies using [uv](https://docs.astral.sh/uv/):
+To run tests, install [databricks CLI](https://docs.databricks.com/dev-tools/cli/databricks-cli.html) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm). Then install the Python dependencies using [uv](https://docs.astral.sh/uv/):
 
     uv sync --all-extras --dev
 

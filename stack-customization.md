@@ -51,20 +51,18 @@ MLOps Stacks provides example ML code.
 You may want to customize the example code, e.g. further prune it down into a skeleton for data scientists
 to fill out.
 
-If you customize this component, you can still use the CI/CD and ML resource components to build production ML pipelines, as long as you provide ML
-notebooks with the expected interface. For example, model training under ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/training/notebooks/`` and inference under
-``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/deployment/batch_inference/notebooks/``. See code comments in the notebook files for the expected interface & behavior of these notebooks.
+If you customize this component, you can still use the CI/CD and ML resource components to build production ML pipelines, as long as you provide Python scripts with the expected interface. For example, model training under ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/training/`` and inference under
+``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/deployment/batch_inference/``. See code comments in the Python files for the expected interface & behavior.
 
-To integrate [promoting model across environments](https://docs.databricks.com/aws/en/machine-learning/manage-model-lifecycle/#promote-a-model-across-environments) into MLOps Stacks using the [`copy_model_version` MLflow Client API](https://mlflow.org/docs/latest/api_reference/python_api/mlflow.client.html#mlflow.client.MlflowClient.copy_model_version), you may consider using reference code snippets to adapt the `model training` notebooks under ``mlops-stacks/template/
-{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/training/notebooks/``for `promoting model` e.g. from `dev_qa` environment to `uat` and `prod` environments. Unity Catalog registered models can be shared and promoted across different workspaces and/or environments, provided they are connected to the same Unity Catalog metastore and appropriate privileges are in place.
+To integrate [promoting model across environments](https://docs.databricks.com/aws/en/machine-learning/manage-model-lifecycle/#promote-a-model-across-environments) into MLOps Stacks using the [`copy_model_version` MLflow Client API](https://mlflow.org/docs/latest/api_reference/python_api/mlflow.client.html#mlflow.client.MlflowClient.copy_model_version), you may consider using reference code snippets to adapt the `model training` Python scripts under ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/training/`` for `promoting model` e.g. from `dev_qa` environment to `uat` and `prod` environments. Unity Catalog registered models can be shared and promoted across different workspaces and/or environments, provided they are connected to the same Unity Catalog metastore and appropriate privileges are in place.
 
 You may also want to update developer-facing docs under ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/README.md.tmpl``, which will be read by users of your stack.
 
 ### CI/CD workflows
-MLOps Stacks currently has the following sub-components for CI/CD:
-* CI/CD workflow logic defined under `mlops-stacks/template/{{.input_root_dir}}/.github/` for testing and deploying ML code and models
+MLOps Stacks includes the following CI/CD sub-components:
+* CI/CD workflow logic is generated into the created project to handle testing and deploying ML code and models (created during project initialization via `databricks bundle init`)
 * Logic to trigger model deployment through REST API calls to your CD system, when model training completes.
-  This logic is currently captured in ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/deployment/model_deployment/notebooks/ModelDeployment.py``
+  This logic is currently captured in ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/deployment/model_deployment/ModelDeployment.py.tmpl``
 
 ### ML resource configs
 Root ML resource config file can be found as ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/databricks.yml``. 
@@ -77,10 +75,9 @@ You can update this component to customize the default ML pipeline structure for
 e.g. add additional model inference jobs or modify the default instance type used in ML jobs.
 
 When updating this component, you may want to update developer-facing docs in
-``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/resources/README.md``.
+``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/resources/README.md.tmpl``.
 
 ### Docs
-After making customizations, make any changes needed to
-the docs under `mlops-stacks/template/{{.input_root_dir}}/docs` and in the main README
-(`mlops-stacks/template/{{.input_root_dir}}/README.md`) to reflect any updates you've made to the MLOps Stacks repo.
-For example, you may want to include a link to your custom MLOps Stacks repo in `mlops-stacks/template/{{.input_root_dir}}/README.md`.
+After making customizations, update the generated project's main README
+(`mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/README.md.tmpl`) to reflect any updates you've made to the MLOps Stacks repo.
+For example, you may want to include a link to your custom MLOps Stacks repo or document any added/modified components.

@@ -1,17 +1,33 @@
 # Model monitoring workflow
 resources:
   jobs:
-    iris_model_monitoring:
-      name: iris-model-monitoring-${bundle.target}
+    model_monitoring_job:
+      name: ${bundle.target}-{{ .input_project_name }}-model-monitoring-job
       tasks:
-        - task_key: MonitorModel
+        - task_key: monitored_metric_violation_check
           notebook_task:
-            notebook_path: ../monitoring/notebooks/MonitorModel.py
+            notebook_path: ../monitoring/MonitoredMetricViolationCheck.py
             base_parameters:
-              model_name: ${var.catalog_name}.${var.schema_name}.${var.model_name}
-              monitoring_table: ${var.catalog_name}.${var.schema_name}.${var.feature_set_name}
-              drift_threshold: "0.1"
+              table_name_under_monitor: ${var.catalog_name}.${var.schema_name}.{{ .input_inference_table_name }}
+              metric_to_monitor: root_mean_squared_error
+              metric_violation_threshold: "100"
+              num_evaluation_windows: "5"
+              num_violation_windows: "2"
           job_cluster_key: monitoring_cluster
+        - task_key: check_violation
+          condition_task:
+            op: EQUAL_TO
+            left: "${tasks.monitored_metric_violation_check.values.is_metric_violated}"
+            right: "true"
+          depends_on:
+            - task_key: monitored_metric_violation_check
+        - task_key: trigger_retraining
+          depends_on:
+            - task_key: check_violation
+              outcome: "true"
+          run_job_task:
+            job_id: ${resources.jobs.model_training_job.id}
+            git_source_info: url:${bundle.git.origin_url}; branch:${bundle.git.branch}; commit:${bundle.git.commit}
 
       job_clusters:
         - job_cluster_key: monitoring_cluster
@@ -24,14 +40,6 @@ resources:
               spark.databricks.cluster.profile: singleNode
             custom_tags:
               ResourceClass: SingleNode
-
-        - task_key: trigger_retraining
-          depends_on:
-            - task_key: is_metric_violated
-              outcome: "true"
-          run_job_task:
-            job_id: ${resources.jobs.model_training_job.id}
-            git_source_info: url:${bundle.git.origin_url}; branch:${bundle.git.branch}; commit:${bundle.git.commit}
 
       environments:
         - environment_key: default
