@@ -5,7 +5,7 @@
 
 # CI/CD workflows — highest-value supply-chain surface.
 # TODO: Create a github team to manage platform merges and ensure no unauthorised template changes are made
-# /.github/            @annemariebester6
-# /.github/workflows/  @annemariebester6
+/.github/            @annemariebester6
+/.github/workflows/  @annemariebester6
 
-# /.mlops-stacks/        @annemariebester6
+/.mlops-stacks/        @annemariebester6
