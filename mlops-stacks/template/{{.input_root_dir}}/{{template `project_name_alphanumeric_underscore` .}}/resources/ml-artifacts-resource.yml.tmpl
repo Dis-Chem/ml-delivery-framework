@@ -9,7 +9,7 @@ grants: &grants
   grants:
     - privileges:
         - EXECUTE
-      principal: {{ .input_unity_catalog_read_user_group }}
+      principal: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
 
 # Defines model and experiments
 resources:

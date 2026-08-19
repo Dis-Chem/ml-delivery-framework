@@ -14,6 +14,11 @@ variables:
     default: {{template `model_name` .}}
   catalog_name:
     description: The catalog name to save the trained model
+  # Platform and domain groups
+  grp_platform_admin:
+    description: Platform Administrators
+    default: databricks_{{ .input_dev_catalog_name}}_workspace_admin
+  # Access groups
 
 include:
   # Resources folder contains ML artifact resources for the ML project that defines model and experiment
@@ -30,32 +35,51 @@ include:
 
 # Deployment Target specific values for workspace
 targets:
-  dev:  # UC Catalog Name
-    mode: development
+  dev_qa:
     default: true
     variables:
-      catalog_name: dev
+      catalog_name: {{ .input_dev_catalog_name }}
     workspace:
-      # TODO: add dev workspace URL
-      host:
+      host: {{ .input_databricks_dev_workspace_host }}
+      root_path: /Shared/.bundle/${bundle.name}
+    
+    # Global permissions for all workflows in dev_qa
+    permissions:
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
+        level: CAN_MANAGE
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
+        level: CAN_RUN
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
+        level: CAN_MANAGE
 
-{{- if (eq .input_setup_cicd_and_project `CICD_and_Project`)}}
-
-  staging:
+  uat:
     variables:
-      catalog_name: {{ .input_staging_catalog_name }}
+      catalog_name: {{ .input_uat_catalog_name }}
     workspace:
-      host: {{template `databricks_staging_workspace_host` .}}
+      host: {{ .input_databricks_uat_workspace_host }}
+      root_path: /Shared/.bundle/${bundle.name}
+    
+    # Global permissions for all workflows in uat
+    permissions:
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
+        level: CAN_RUN
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
+        level: CAN_RUN
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
+        level: CAN_MANAGE
 
   prod:
     variables:
       catalog_name: {{ .input_prod_catalog_name }}
     workspace:
-      host: {{template `databricks_prod_workspace_host` .}}
-
-  test:
-    variables:
-      catalog_name: {{ .input_test_catalog_name }}
-    workspace:
-      host: {{template `databricks_staging_workspace_host` .}}
-{{ end }}
+      host: {{ .input_databricks_prod_workspace_host}}
+      root_path: /Shared/.bundle/${bundle.name}
+    
+    # Global permissions for all workflows in prod
+    permissions:
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
+        level: CAN_RUN
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
+        level: CAN_RUN
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
+        level: CAN_MANAGE
