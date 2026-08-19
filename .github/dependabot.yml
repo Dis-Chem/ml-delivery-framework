@@ -1,9 +1,11 @@
 version: 2
 updates:
-  # Keep GitHub Actions pinned to SHAs up to date (Dependabot updates the SHA
-  # and the trailing version comment together).
+  # 1. Global GitHub Actions Check
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # Scans the root actions files AND any actions bundled inside your template variations
+    directories:
+      - "/"
+      - "/*/template/.github/workflows"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
@@ -11,12 +13,20 @@ updates:
       - "dependencies"
       - "github-actions"
 
-  # Python dev/test dependencies.
+  # 2. Multi-Template Python Package Check
   - package-ecosystem: "pip"
-    directory: "/"
+    # Targets the root dev-requirements and all nested template requirement footprints
+    directories:
+      - "/"
+      - "/*/template"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "python"
+    
+    # Consolidates identical package bumps across multiple template folders into 1 clean PR
+    groups:
+      python-monorepo-deps:
+        group-by: dependency-name
