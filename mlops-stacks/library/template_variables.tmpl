@@ -23,6 +23,10 @@
     {{ .input_project_name }}-experiment
 {{- end }}
 
+{{ define `schema_name` -}}
+    {{ .input_schema_name }}
+{{- end }}
+
 {{ define `project_name_alphanumeric_underscore` -}}
     {{- (regexp `-`).ReplaceAllString ((regexp `[^A-Za-z0-9_-]`).ReplaceAllString (print .input_project_name) ``) `_` -}}
 {{- end }}
