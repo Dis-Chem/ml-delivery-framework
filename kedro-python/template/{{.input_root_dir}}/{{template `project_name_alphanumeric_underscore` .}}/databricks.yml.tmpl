@@ -10,10 +10,10 @@ variables:
     description: |
       Kedro environment (conf/<environment>) that the workflow tasks run against.
       Passed to every task as `--env`. Each deployment target below sets this to
-      its own name, so `conf/dev`, `conf/staging`, `conf/prod` and `conf/test`
-      line up with the four targets.
+      its own name, so `conf/dev_qa`, `conf/uat`, and `conf/prod`
+      line up with the three targets.
     type: string
-    default: dev
+    default: dev_qa
   node_type_id:
     description: Node type for the job clusters that run the Kedro nodes.
     type: string
@@ -57,20 +57,20 @@ include:
 
 # Deployment Target specific values for workspace
 targets:
-  dev:  # UC Catalog Name
+  dev_qa:  # UC Catalog Name
     mode: development
     default: true
     variables:
       catalog_name: {{ .input_dev_catalog_name }}
-      environment: dev
+      environment: dev_qa
     sync:
       include:
-        - conf/dev/*.yml
-        - conf/dev/*.gitkeep
+        - conf/dev_qa/*.yml
+        - conf/dev_qa/*.gitkeep
     workspace:
       host: {{ .input_databricks_dev_workspace_host }}
 
-    # Global permissions for all workflows in dev
+    # Global permissions for all workflows in dev_qa
     permissions:
       - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
         level: CAN_MANAGE
@@ -79,24 +79,24 @@ targets:
       - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
         level: CAN_MANAGE
 
-  staging:
+  uat:
     variables:
       catalog_name: {{ .input_uat_catalog_name }}
-      environment: staging
+      environment: uat
     sync:
       include:
-        - conf/staging/*.yml
-        - conf/staging/*.gitkeep
+        - conf/uat/*.yml
+        - conf/uat/*.gitkeep
     workspace:
       host: {{ .input_databricks_uat_workspace_host }}
 
-    # Global permissions for all workflows in staging
+    # Global permissions for all workflows in uat
     permissions:
-      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
+      - group_name: databricks_{{ .input_test_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
         level: CAN_RUN
-      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
+      - group_name: databricks_{{ .input_test_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
         level: CAN_RUN
-      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
+      - group_name: databricks_{{ .input_test_branch }}_{{ .input_domain }}_workspace_admin
         level: CAN_MANAGE
 
   prod:
@@ -116,29 +116,9 @@ targets:
 
     # Global permissions for all workflows in prod
     permissions:
-      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
+      - group_name: databricks_{{ .input_prod_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
         level: CAN_RUN
-      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
+      - group_name: databricks_{{ .input_prod_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
         level: CAN_RUN
-      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
-        level: CAN_MANAGE
-
-  test:
-    variables:
-      catalog_name: {{ .input_uat_catalog_name }}
-      environment: test
-    sync:
-      include:
-        - conf/test/*.yml
-        - conf/test/*.gitkeep
-    workspace:
-      host: {{ .input_databricks_uat_workspace_host }}
-
-    # Global permissions for all workflows in test
-    permissions:
-      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
-        level: CAN_RUN
-      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
-        level: CAN_RUN
-      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
+      - group_name: databricks_{{ .input_prod_branch }}_{{ .input_domain }}_workspace_admin
         level: CAN_MANAGE

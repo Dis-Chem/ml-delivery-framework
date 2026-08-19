@@ -11,8 +11,8 @@ The default stack in this repo includes two primary modular components:
 
 | Component                   | Description                                                                                                                                                           | Why it's useful                                                                                                                                                                         |
 |-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [ML Code](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/)                     | Example ML project structure ([training](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/training) and [batch inference](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/deployment/batch_inference), etc), with unit tested Python modules and notebooks                                                                                           | Quickly iterate on ML problems, without worrying about refactoring your code into tested modules for productionization later on.                                                        |
-| [ML Resources as Code](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources) | ML pipeline resources ([training](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources/model-workflow-resource.yml.tmpl) and [batch inference](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources/batch-inference-workflow-resource.yml.tmpl) jobs, etc) defined through [databricks CLI bundles](https://docs.databricks.com/dev-tools/cli/bundle-cli.html)    | Govern, audit, and deploy changes to your ML resources (e.g. "use a larger instance type for automated model retraining") through pull requests, rather than adhoc changes made via UI. |
+| [ML Code](mlops-stacks/template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/)                     | Example ML project structure ([training](mlops-stacks/template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/training) and [batch inference](mlops-stacks/template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/deployment/batch_inference), etc), with unit tested Python modules and notebooks                                                                                           | Quickly iterate on ML problems, without worrying about refactoring your code into tested modules for productionization later on.                                                        |
+| [ML Resources as Code](mlops-stacks/template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources) | ML pipeline resources ([training](mlops-stacks/template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources/model-workflow-resource.yml.tmpl) and [batch inference](mlops-stacks/template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources/batch-inference-workflow-resource.yml.tmpl) jobs, etc) defined through [databricks CLI bundles](https://docs.databricks.com/dev-tools/cli/bundle-cli.html)    | Govern, audit, and deploy changes to your ML resources (e.g. "use a larger instance type for automated model retraining") through pull requests, rather than adhoc changes made via UI. |
 
 See the [FAQ](#FAQ) for questions on common use cases.
 
@@ -64,7 +64,7 @@ Please follow [the instruction](https://docs.databricks.com/en/dev-tools/cli/dat
 
 To create a new project, run:
 
-    databricks bundle init mlops-stacks
+    databricks bundle init ./mlops-stacks
 
 This will prompt for the following initialization parameters:
 
@@ -104,6 +104,13 @@ This will prompt for the following initialization parameters:
 
 See the generated ``README.md`` in your project directory for next steps!
 
+## MLOps Stacks and Kedro-based templates
+
+This repo provides two templates for starting new ML projects on Databricks:
+
+- **MLOps Stacks** (non-Kedro, notebook/script-based): Training, validation, batch inference, and monitoring workflows for standard ML projects. Initialize with `databricks bundle init ./mlops-stacks`.
+- **Kedro Python** (Kedro-based): A production-grade Kedro project template that deploys to Databricks. Nodes become jobs, configs are environment-aware, and you can run the same pipeline locally and on Databricks. See the [Kedro template README](kedro-python/template/{{.input_root_dir}}/README.md.tmpl) for init parameters and usage.
+
 ## Customize MLOps Stacks
 Your organization can use the default stack as is or customize it as needed, e.g. to add/remove components or
 adapt individual components to fit your organization's best practices. See the
@@ -122,14 +129,14 @@ production model serving endpoints.
 Yes. Currently, you can instantiate a new project and copy relevant components
 into your existing project to productionize it. MLOps Stacks is modularized, so
 you can e.g. copy just the GitHub Actions workflows under `.github` or ML resource configs
- under ``{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/resources`` 
-and ``{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/databricks.yml`` into your existing project.
+ under ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/resources`` 
+and ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/databricks.yml`` into your existing project.
 
 ### Can I adopt individual components of MLOps Stacks?
 For this use case, we recommend instantiating via [Databricks asset bundle templates](https://docs.databricks.com/en/dev-tools/bundles/templates.html) 
 and copying the relevant subdirectories. For example, all ML resource configs
-are defined under ``{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/resources``
-and ``{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/databricks.yml``, while CI/CD is defined e.g. under `.github`
+are defined under ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/resources``
+and ``mlops-stacks/template/{{.input_root_dir}}/{{template `project_name_alphanumeric_underscore` .}}/databricks.yml``, while CI/CD is defined e.g. under `.github`
 if using GitHub Actions. 
 
 ### Can I customize my MLOps Stack?

@@ -53,7 +53,7 @@ contained in the following files:
 │   │
 │   ├── tests                   <- Unit tests for the ML project, including the modules under `features`.
 │   │
-│   ├── resources               <- ML resource (ML jobs, MLflow models) config definitions expressed as code, across dev/staging/prod/test.
+│   ├── resources               <- ML resource (ML jobs, MLflow models) config definitions expressed as code, across dev_qa/uat/prod.
 │       │
 │       ├── model-workflow-resource.yml                <- ML resource config definition for model training, validation, deployment workflow
 │       │
@@ -82,7 +82,7 @@ contained in the following files:
 │   │
 │   ├── tests                   <- Unit tests for the ML project, including the modules under `features`.
 │   │
-│   ├── resources               <- ML resource (ML jobs, MLflow models) config definitions expressed as code, across dev/staging/prod/test.
+│   ├── resources               <- ML resource (ML jobs, MLflow models) config definitions expressed as code, across dev_qa/uat/prod.
 │       │
 │       ├── model-workflow-resource.yml                <- ML resource config definition for model training, validation, deployment workflow
 │       │
@@ -147,13 +147,11 @@ to clone it into your dev workspace and iterate.
 Otherwise, e.g. if iterating on ML code for a new project, follow the steps below:
 * Follow the [UI workflow]({{ template `generate_doc_link` (map (pair "path" "repos/git-operations-with-repos#add-a-repo-and-connect-remotely-later")) }})
   for creating a repo, but uncheck the "Create repo by cloning a Git repository" checkbox.
-* Install the `dbx` CLI via `pip install --upgrade dbx`
-* Run `databricks configure --profile {{ .input_project_name }}-dev --token --host <your-dev-workspace-url>`, passing the URL of your dev workspace.
+* Run `databricks configure --host <your-dev-workspace-url>`, passing the URL of your dev workspace.
   This should prompt you to enter an API token
 * [Create a personal access token]({{ template `generate_doc_link` (map (pair "path" "dev-tools/auth/pat.html")) }})
   in your dev workspace and paste it into the prompt from the previous step
-* From within the root directory of the current project, use the [dbx sync](https://dbx.readthedocs.io/en/latest/guides/python/devloop/mixed/#using-dbx-sync-repo-for-local-to-repo-synchronization) tool to copy code files from your local machine into the Repo by running
-  `dbx sync repo --profile {{ .input_project_name }}-dev --source . --dest-repo your-repo-name`, where `your-repo-name` should be the last segment of the full repo name (`/Repos/username/your-repo-name`)
+* Use Databricks [Repos]({{ template `generate_doc_link` (map (pair "path" "repos/index.html")) }}) to sync code from your local machine, or use Databricks Bundles (`databricks bundle deploy --target dev_qa`, described in [Local development and dev workspace](#iterating-on-ml-code)) to push code and resource configs together
 
 {{ if (eq .input_include_feature_store `yes`) }}
 ### Develop locally

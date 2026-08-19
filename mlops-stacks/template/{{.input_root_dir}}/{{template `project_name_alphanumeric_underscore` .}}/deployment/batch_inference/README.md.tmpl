@@ -37,7 +37,7 @@ df.withColumn(
 ).write.mode(
     "overwrite"
 ).saveAsTable(
-    name="hive_metastore.default.taxi_scoring_sample_feature_store_inference_input"
+    name="<catalog>.{{ .input_schema_name }}.taxi_scoring_sample_feature_store_inference_input"
 )
 ```
 {{ else }}

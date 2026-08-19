@@ -19,14 +19,14 @@ work with pandas while the read and the split stay in Spark.
 
 ```
 {{template `project_name_alphanumeric_underscore` .}}/
-├── databricks.yml              <- Bundle root: name, variables, artifacts, sync, includes, and the dev/staging/prod/test targets.
+├── databricks.yml              <- Bundle root: name, variables, artifacts, sync, includes, and the dev_qa/uat/prod targets.
 ├── pyproject.toml              <- Project metadata. [project.scripts] declares the entry point the Databricks tasks call.
 ├── requirements.txt            <- Runtime dependencies.
 │
 ├── conf/
 │   ├── base/                   <- Shared Kedro config: catalog.yml, parameters.yml.
 │   ├── local/                  <- Your own credentials and overrides. Never committed.
-│   ├── dev/ staging/ prod/ test/
+│   ├── dev_qa/ uat/ prod/
 │   │                           <- Per-target config. catalog.yml points datasets at that
 │   │                              target's storage; databricks.yml holds the job overrides
 │   │                              that `kedro databricks bundle` merges into resources/.
@@ -82,8 +82,8 @@ organisation before your first deploy.
 ### 2. Deploy
 
 ```bash
-databricks bundle validate --target dev
-databricks bundle deploy  --target dev
+databricks bundle validate --target dev_qa
+databricks bundle deploy  --target dev_qa
 ```
 
 `databricks.yml` declares an `artifacts` entry that runs `kedro package` as part of the
@@ -107,7 +107,7 @@ The job definitions under `resources/` are generated from the Kedro pipelines. A
 editing a pipeline, regenerate them:
 
 ```bash
-kedro databricks bundle --overwrite --env dev
+kedro databricks bundle --overwrite --env dev_qa
 ```
 
 Then review `git diff resources/`. See [resources/README.md](./resources/README.md) for
