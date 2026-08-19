@@ -27,28 +27,24 @@ ML Resource Configurations in this directory:
 The ML resources can be deployed to databricks workspace based on the databricks CLI bundles deployment config.
 Deployment configs of different deployment targets share the general ML resource configurations with added ability to specify deployment target specific values (workspace URI, model name, jobs notebook parameters, etc).
 
-NOTE: This project was not setup with CI/CD workflows. You can setup CI/CD with a new initialization of MLOps Stacks. The rest of this section only applies if you are using a monorepo setup with CI/CD previously or have setup CI/CD otherwise.
-
-For Model Registry in Unity Catalog, we expect a catalog to exist with the name of the deployment target by default. For example, if the deployment target is `dev`, we expect a catalog named `dev` to exist in the workspace.
+For Model Registry in Unity Catalog, the catalog name is configured per target via bundle variables. The catalogs are set via `input_dev_catalog_name`, `input_uat_catalog_name`, and `input_prod_catalog_name` in your `databricks.yml` file. Each catalog must already exist in its respective workspace, and service principals must have access to them.
 If you want to use different catalog names, please update the `targets` declared in the `{{template `project_name_alphanumeric_underscore` .}}/databricks.yml` and `{{template `project_name_alphanumeric_underscore` .}}/resources/ml-artifacts-resource.yml` files.
-If changing the `staging`, `prod`, or `test` deployment targets, you'll need to update the workflows located in the root directory if in a monorepo setup with CI/CD. Otherwise you can setup CI/CD with a new initialization of MLOps Stacks.
+If changing the `uat` or `prod` deployment targets, make sure to update the corresponding workspace URLs and catalog names in your `databricks.yml`.
 
 
 | Deployment Target | Description                                                                                                                                                                                                                           | Databricks Workspace | Model Name                          | Experiment Name                                |
 |-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|-------------------------------------|------------------------------------------------|
-| dev         | The `dev` deployment target is used by ML engineers to deploy ML resources to development workspace with `dev` configs. The config is for ML project development purposes.                                                           | dev workspace        | dev-{{template `model_name` .}}     | /dev-{{template `experiment_base_name` .}}     |
-| staging     | The `staging` deployment target is part of the CD pipeline. Latest main content will be deployed to staging workspace with `staging` config.                                                             | staging workspace    | staging-{{template `model_name` .}} | /staging-{{template `experiment_base_name` .}} |
-| prod        | The `prod` deployment target is part of the CD pipeline. Latest release content will be deployed to prod workspace with `prod` config.                                                                      | prod workspace       | prod-{{template `model_name` .}}    | /prod-{{template `experiment_base_name` .}}    |
-| test        | The `test` deployment target is part of the CI pipeline. For changes targeting the main branch, upon making a PR, an integration test will be triggered and ML resources deployed to the staging workspace defined under `test` deployment target. | staging workspace    | test-{{template `model_name` .}}    | /test-{{template `experiment_base_name` .}}    |
+| dev_qa      | The `dev_qa` deployment target is used by ML engineers to deploy ML resources to development workspace with `dev_qa` configs. The config is for ML project development purposes.                                                     | dev workspace        | dev_qa-{{template `model_name` .}}     | /dev_qa-{{template `experiment_base_name` .}}     |
+| uat         | The `uat` deployment target is used to deploy ML resources to the UAT workspace with `uat` config.                                                             | uat workspace    | uat-{{template `model_name` .}} | /uat-{{template `experiment_base_name` .}} |
+| prod        | The `prod` deployment target is used to deploy ML resources to the prod workspace with `prod` config.                                                                      | prod workspace       | prod-{{template `model_name` .}}    | /prod-{{template `experiment_base_name` .}}    |
 
-During ML code development, you can deploy local ML resource configurations together with ML code to the a Databricks workspace to run the training, model validation or batch inference pipelines. The deployment will use `dev` config by default.
+During ML code development, you can deploy local ML resource configurations together with ML code to a Databricks workspace to run the training, model validation or batch inference pipelines. The deployment will use `dev_qa` config by default.
 
-You can open a PR (pull request) to modify ML code or the resource config against main branch.
-The PR will trigger Python unit tests, followed by an integration test executed on the staging workspace, as defined under the `test` environment resource. 
+You can open a PR (pull request) to modify ML code or the resource config against the main branch.
 
-Upon merging a PR to the main branch, the main branch content will be deployed to the staging workspace with `staging` environment resource configurations.
+Upon merging a PR to the main branch, the main branch content will be deployed to the UAT workspace with `uat` environment resource configurations.
 
-Upon merging code into the release branch, the release branch content will be deployed to prod workspace with `prod` environment resource configurations.
+Upon merging code into the production branch (as configured by `input_prod_branch`), the release branch content will be deployed to the prod workspace with `prod` environment resource configurations.
 
 ## Local development and dev workspace
 
@@ -76,7 +72,7 @@ After development is done, you can run `databricks bundle destroy` to destroy (r
 
 ### Setting up the batch inference job
 The batch inference job expects an input Delta table with a schema that your registered model accepts (out-of-the-box we provide a working example using the `nyctaxi` dataset with the schema [trip_distance, pickup_zip and dropoff_zip]). To use the batch
-inference job, set up such a Delta table in both your staging and prod workspaces. For example, with the `nyctaxi` dataset, the following code can be run in a Databricks notebook to create the batch inference input table:
+inference job, set up such a Delta table in both your UAT and prod workspaces. For example, with the `nyctaxi` dataset, the following code can be run in a Databricks notebook to create the batch inference input table:
 ```
 # To test the batch job the training data can be used as input
 
@@ -112,8 +108,8 @@ principal corresponding to a particular environment has permissions to read the 
 * `MODIFY` permission for the output table if it pre-dates your job.
 
 ### Setting up model validation
-The model validation workflow focuses on building a plug-and-play stack component for continuous deployment (CD) of models 
-in staging and prod.
+The model validation workflow focuses on building a plug-and-play stack component for model deployment
+in UAT and prod.
 Its central purpose is to evaluate a registered model and validate its quality before deploying the model to Production/Staging.
 
 Model validation contains three components: 
@@ -185,15 +181,20 @@ resources:
           spec:
             environment_version: "5"
             dependencies:
-              - -r ../requirements.txt
+              - databricks-sdk>=0.12.0
+              - mlflow>=3.1.0
+              - numpy>=1.23.0
+              - pandas>=2.3.3
+              - pyspark>=3.5.0
+              - scikit-learn>=1.3.0
 ```
 
 The example above defines a Databricks job with name `${bundle.target}-{{ .input_project_name }}-batch-inference-job`
 that runs the notebook under `{{template `project_name_alphanumeric_underscore` .}}/deployment/batch_inference/BatchInference.py` to regularly apply your ML model for batch inference.
 
-Jobs run on [serverless compute]({{ template `generate_doc_link` (map (pair "path" "jobs/run-serverless-jobs.html")) }}) by default: the task references a serverless environment by its `environment_key` (`default` here), and that key is defined once under `environments`, with its own dependencies installed from `requirements.txt`. Multiple tasks in the same job can share the same `environment_key` to reuse one environment definition.
+Jobs run on [serverless compute]({{ template `generate_doc_link` (map (pair "path" "jobs/run-serverless-jobs.html")) }}) by default: the task references a serverless environment by its `environment_key` (`default` here), and that key is defined once under `environments`, with its own dependencies listed inline. The dependencies list must be kept in sync with your `pyproject.toml` file, as Databricks bundle job environments do not currently support reading from `pyproject.toml` directly. Multiple tasks in the same job can share the same `environment_key` to reuse one environment definition.
 
-We specify a `batch_inference_job` under `resources/jobs` to define a databricks workflow with internal key `batch_inference_job` and job name `{bundle.target}-{{ .input_project_name }}-batch-inference-job`.
+We specify a `batch_inference_job` under `resources/jobs` to define a databricks workflow with internal key `batch_inference_job` and job name `${bundle.target}-{{ .input_project_name }}-batch-inference-job`.
 The workflow contains a single task with task key `batch_inference_job`. The task runs notebook `../deployment/batch_inference/BatchInference.py` with provided parameters `env` and `input_table_name` passing to the notebook.
 After setting up databricks CLI, you can run command `databricks bundle schema`  to learn more about databricks CLI bundles schema.
 
@@ -213,12 +214,12 @@ variables:
     default: input_table
 
 targets:
-  dev:
+  dev_qa:
     variables:
       batch_inference_input_table: dev_table
-  test:
+  uat:
     variables:
-      batch_inference_input_table: test_table
+      batch_inference_input_table: uat_table
 
 resources:
   jobs:
@@ -239,19 +240,23 @@ resources:
           spec:
             environment_version: "5"
             dependencies:
-              - -r ../requirements.txt
+              - databricks-sdk>=0.12.0
+              - mlflow>=3.1.0
+              - numpy>=1.23.0
+              - pandas>=2.3.3
+              - pyspark>=3.5.0
+              - scikit-learn>=1.3.0
 ```
 The `batch_inference_job` notebook parameter `input_table_name` is using a bundle variable `batch_inference_input_table` with default value "input_table".
-The variable value will be overwritten with "dev_table" for `dev` environment config and "test_table" for `test` environment config:
-- during deployment with the `dev` environment config, the `input_table_name` parameter will get the value "dev_table"
-- during deployment with the `staging` environment config, the `input_table_name` parameter will get the value "input_table"
+The variable value will be overwritten with "dev_table" for `dev_qa` environment config and "uat_table" for `uat` environment config:
+- during deployment with the `dev_qa` environment config, the `input_table_name` parameter will get the value "dev_table"
+- during deployment with the `uat` environment config, the `input_table_name` parameter will get the value "uat_table"
 - during deployment with the `prod` environment config, the `input_table_name` parameter will get the value "input_table"
-- during deployment with the `test` environment config, the `input_table_name` parameter will get the value "test_table"
 
 ### Test config changes
-To test out a config change, simply edit one of the fields above. For example, increase the cluster size by updating `num_workers` from 3 to 4. 
+To test out a config change, simply edit one of the fields above. For example, increase the cluster size by updating `num_workers` from 3 to 4.
 
 Then follow [Local development and dev workspace](#local-development-and-dev-workspace) to deploy the change to the dev workspace.
-Alternatively you can open a PR. Continuous integration will then validate the updated config and deploy tests to the to staging workspace.
+Alternatively you can open a PR. You can then test the config changes in your UAT environment after the PR is merged.
 
 [Back to project README](../README.md)

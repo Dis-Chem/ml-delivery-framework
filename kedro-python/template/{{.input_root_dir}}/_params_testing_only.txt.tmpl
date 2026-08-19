@@ -6,9 +6,8 @@ input_schema_name={{.input_schema_name}}
 input_unity_catalog_read_user_group={{.input_unity_catalog_read_user_group}}
 input_inference_table_name={{.input_inference_table_name}}
 
-databricks_staging_workspace_host={{ template `databricks_staging_workspace_host` . }}
+databricks_uat_workspace_host={{ template `databricks_uat_workspace_host` . }}
 databricks_prod_workspace_host={{ template `databricks_prod_workspace_host` . }}
-databricks_test_workspace_host={{ template `databricks_test_workspace_host` . }}
 cloud_specific_node_type_id={{ template `cloud_specific_node_type_id` . }}
 spark_version={{ template `spark_version` . }}
 num_workers={{ template `num_workers` . }}

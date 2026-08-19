@@ -1,4 +1,4 @@
-# Catalog overrides for the 'test' deployment target.
+# Catalog overrides for the 'uat' deployment target.
 #
 # The datasets below mirror conf/base/catalog.yml but resolve their paths against
 # `_file_path` instead of hardcoding /dbfs/FileStore, so the same pipeline code
@@ -8,7 +8,7 @@
 # TODO: replace <your-volume-name> with the Unity Catalog volume this target
 # should read and write. Until then, deploys succeed but pipeline runs fail on
 # the first dataset access.
-_file_path: /Volumes/<your-volume-name>/{{ .input_project_name }}/test
+_file_path: /Volumes/<your-volume-name>/{{ .input_project_name }}/uat
 
 example_iris_data:
   type: spark.SparkDatasetV2

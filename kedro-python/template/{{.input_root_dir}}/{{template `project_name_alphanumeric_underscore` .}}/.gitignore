@@ -4,9 +4,9 @@
 # Databricks CLI bundle state and locks
 .databricks
 
-# NOTE: conf/dev is intentionally NOT ignored here, unlike in a project set up by
+# NOTE: conf/dev_qa is intentionally NOT ignored here, unlike in a project set up by
 # `kedro databricks init`. That command writes your own user name into
-# conf/dev/databricks.yml, which makes it machine-specific; the version shipped by
+# conf/dev_qa/databricks.yml, which makes it machine-specific; the version shipped by
 # this template is generic and meant to be committed and shared.
 
 ##########################

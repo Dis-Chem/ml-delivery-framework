@@ -27,7 +27,7 @@ contained in the following files:
     │
     ├── databricks.yml          <- Bundle root file loaded by the databricks CLI. Defines the bundle
     │                              name, variables, the wheel artifact, the conf sync rules, and the
-    │                              dev/staging/prod/test deployment targets.
+    │                              dev_qa/uat/prod deployment targets.
     │
     ├── pyproject.toml          <- Project metadata and dependencies. [project.scripts] declares the
     │                              console script that the Databricks tasks invoke; [tool.kedro] declares
@@ -38,7 +38,7 @@ contained in the following files:
     ├── conf                    <- Kedro configuration.
     │   ├── base                <- Shared across every environment: catalog.yml, parameters.yml.
     │   ├── local               <- Personal credentials and overrides. Not committed.
-    │   ├── dev, staging, prod, test
+    │   ├── dev_qa, uat, prod
     │   │                       <- One directory per deployment target. catalog.yml points datasets at
     │   │                          that target's storage; databricks.yml holds the cluster, schedule and
     │   │                          job-name overrides that are merged into resources/ at generation time.

@@ -45,7 +45,7 @@ console script declared in `pyproject.toml` under `[project.scripts]`:
 ```
 
 `${var.environment}` resolves to the deployment target's name, so a task running under
-target `staging` reads `conf/base` layered with `conf/staging`.
+target `uat` reads `conf/base` layered with `conf/uat`.
 
 ## Regenerating the pipeline jobs
 
@@ -53,7 +53,7 @@ The pipeline job files are **generated**, not hand-maintained. After adding, ren
 reordering Kedro nodes, regenerate them:
 
 ```bash
-kedro databricks bundle --overwrite --env dev
+kedro databricks bundle --overwrite --env dev_qa
 ```
 
 This reads the pipeline definitions from `src/{{template `project_name_alphanumeric_underscore` .}}/pipelines`,
@@ -94,7 +94,7 @@ regeneration. That header is the only expected diff for an unchanged pipeline: i
 To set up the databricks CLI using a Databricks personal access token, take the following steps:
 
 1. Follow [databricks CLI]({{ template `generate_doc_link` (map (pair "path" "dev-tools/cli/databricks-cli.html")) }}) to download and set up the databricks CLI locally.
-2. Complete the `TODO` in `databricks.yml` to add the dev workspace URL under `targets.dev.workspace.host` if it is not already correct for your organisation.
+2. Complete the `TODO` in `databricks.yml` to add the dev workspace URL under `targets.dev_qa.workspace.host` if it is not already correct for your organisation.
 3. Set up authentication:
 
 ```
@@ -114,13 +114,13 @@ $ databricks bundle validate
    every deploy:
 
 ```
-$ databricks bundle deploy --target dev
+$ databricks bundle deploy --target dev_qa
 ```
 
 3. Trigger a run without waiting for the schedule:
 
 ```
-$ databricks bundle run {{template `project_name_alphanumeric_underscore` .}} --target dev
+$ databricks bundle run {{template `project_name_alphanumeric_underscore` .}} --target dev_qa
 ```
 
 ### Destroy resources
@@ -128,7 +128,7 @@ $ databricks bundle run {{template `project_name_alphanumeric_underscore` .}} --
 To destroy the resources you have provisioned:
 
 ```
-$ databricks bundle destroy --target dev
+$ databricks bundle destroy --target dev_qa
 ```
 
 ## Develop and test config changes
@@ -136,10 +136,10 @@ $ databricks bundle destroy --target dev
 Because the pipeline jobs are generated, the loop for a config change is:
 
 1. Edit `conf/<target>/databricks.yml` (compute, schedule, job name) or the pipeline itself.
-2. `kedro databricks bundle --overwrite --env dev`
+2. `kedro databricks bundle --overwrite --env dev_qa`
 3. `git diff resources/` and confirm the change is the only one.
-4. `databricks bundle validate --target dev`
-5. `databricks bundle deploy --target dev`
+4. `databricks bundle validate --target dev_qa`
+5. `databricks bundle deploy --target dev_qa`
 
 For changes to `databricks.yml`, `ml-artifacts-resource.yml` or the monitoring resource,
 skip step 2 — those files are hand-maintained.
@@ -147,5 +147,5 @@ skip step 2 — those files are hand-maintained.
 To check what a target resolves to without deploying, use:
 
 ```
-$ databricks bundle validate --target staging --output json
+$ databricks bundle validate --target uat --output json
 ```
