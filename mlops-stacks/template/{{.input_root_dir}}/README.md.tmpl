@@ -24,7 +24,7 @@ contained in the following files:
 │
 ├── {{template `project_name_alphanumeric_underscore` .}}       <- Contains python code, notebooks and ML resources related to one ML project. 
 │   │
-│   ├── requirements.txt        <- Specifies Python dependencies for ML code (for example: model training, batch inference).
+│   ├── pyproject.toml          <- Specifies Python dependencies for ML code (for example: model training, batch inference).
 │   │
 │   ├── databricks.yml          <- databricks.yml is the root bundle file for the ML project that can be loaded by databricks CLI bundles. It defines the bundle name, workspace URL and resource config component to be included.
 │   │
@@ -104,6 +104,6 @@ the [project README](./{{template `project_name_alphanumeric_underscore` .}}/REA
 | Role                          | Goal                                                                         | Docs                                                                                                                                                                |
 |-------------------------------|------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Data Scientist                | Get started writing ML code for a brand new project                          | [project README](./{{template `project_name_alphanumeric_underscore` .}}/README.md) |
-| MLOps / DevOps                | Set up CI/CD for the current ML project   |                                                                                                                        |
+| MLOps / DevOps                | Set up CI/CD for the current ML project   | CI/CD is not currently included; add workflows separately based on your platform (GitHub Actions, GitLab CI, etc)     |
 | Data Scientist                | Update production ML code (e.g. model training logic) for an existing project |                                                                                                                   |
 | Data Scientist                | Modify production model ML resources, e.g. model training or inference jobs  | [ML resource config guide]({{template `project_name_alphanumeric_underscore` .}}/resources/README.md) |

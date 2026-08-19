@@ -1,20 +1,18 @@
-# Databricks MLOps Stacks
+# X, Bigly Labs ML Delivery Framework
 
-> **_NOTE:_**  This feature is in [public preview](https://docs.databricks.com/release-notes/release-types.html).
+> Based on [Databricks MLOps Stacks](https://docs.databricks.com/en/dev-tools/bundles/mlops-stacks.html) — customized for X, Bigly Labs with org-specific workflows and deployment targets.
 
 This repo provides a customizable stack for starting new ML projects
 on Databricks that follow production best-practices out of the box.
 
-Using Databricks MLOps Stacks, data scientists can quickly get started iterating on ML code for new projects while ops engineers set up CI/CD and ML resources
-management, with an easy transition to production. You can also use MLOps Stacks as a building block in automation for creating new data science projects with production-grade CI/CD pre-configured. More information can be found at https://docs.databricks.com/en/dev-tools/bundles/mlops-stacks.html.
+Using this ML Delivery Framework, data scientists can quickly get started iterating on ML code for new projects while ML engineers configure ML resources and model lifecycle management. This is a customized fork with org-specific domains, catalogs, and branch naming conventions pre-configured. More information on the base MLOps Stacks pattern can be found at https://docs.databricks.com/en/dev-tools/bundles/mlops-stacks.html.
 
-The default stack in this repo includes three modular components: 
+The default stack in this repo includes two primary modular components: 
 
 | Component                   | Description                                                                                                                                                           | Why it's useful                                                                                                                                                                         |
 |-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [ML Code](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/)                     | Example ML project structure ([training](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/training) and [batch inference](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/deployment/batch_inference), etc), with unit tested Python modules and notebooks                                                                                           | Quickly iterate on ML problems, without worrying about refactoring your code into tested modules for productionization later on.                                                        |
 | [ML Resources as Code](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources) | ML pipeline resources ([training](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources/model-workflow-resource.yml.tmpl) and [batch inference](template/{{.input_root_dir}}/{{template%20`project_name_alphanumeric_underscore`%20.}}/resources/batch-inference-workflow-resource.yml.tmpl) jobs, etc) defined through [databricks CLI bundles](https://docs.databricks.com/dev-tools/cli/bundle-cli.html)    | Govern, audit, and deploy changes to your ML resources (e.g. "use a larger instance type for automated model retraining") through pull requests, rather than adhoc changes made via UI. |
-| CI/CD([GitHub Actions](template/{{.input_root_dir}}/.github/))                       | [GitHub Actions](https://docs.github.com/en/actions) workflows to test and deploy ML code and resources | Ship ML code faster and with confidence: ensure all production changes are performed through automation and that only tested code is deployed to prod                                   |
 
 See the [FAQ](#FAQ) for questions on common use cases.
 
@@ -52,7 +50,7 @@ https://github.com/databricks/mlops-stacks/assets/87999496/0d220d55-465e-4a69-bd
 ## Using MLOps Stacks
 
 ### Prerequisites
- - Python 3.8+
+ - Python 3.11+
  - [Databricks CLI](https://docs.databricks.com/en/dev-tools/cli/databricks-cli.html) >= v0.236.0
 
 [Databricks CLI](https://docs.databricks.com/en/dev-tools/cli/databricks-cli.html) contains [Databricks asset bundle templates](https://docs.databricks.com/en/dev-tools/bundles/templates.html) for the purpose of project creation.
@@ -68,16 +66,43 @@ To create a new project, run:
 
     databricks bundle init mlops-stacks
 
-This will prompt for parameters for initialization. Some of these parameters are required to get started:
- * ``input_root_dir``: name of the root directory. When initializing with ``CICD_and_Project``, this field will automatically be set to ``input_project_name``.
+This will prompt for the following initialization parameters:
 
-Or used for project initialization:
- * ``input_project_name``: name of the current project
- * ``input_schema_name``: Specifies the name of the schema, under [Models in Unity Catalog](https://docs.databricks.com/en/mlflow/models-in-uc.html#models-in-unity-catalog), under which the models should be registered, but we recommend keeping the name the same as the project name. We default to using the same `schema_name` across catalogs, thus this schema must exist in each catalog used. For example, the training pipeline when executed in the staging environment will register the model to `staging.<schema_name>.<model_name>`, whereas the same pipeline executed in the prod environment will register the mode to `prod.<schema_name>.<model_name>`. Also, be sure that the service principals in each respective environment have the right permissions to access this schema, which would be `USE_CATALOG`, `USE_SCHEMA`, `MODIFY`, `CREATE_MODEL`, and `CREATE_TABLE`.
- * ``input_unity_catalog_read_user_group``: Defines the name of the user group to grant `EXECUTE` (read & use model) privileges for the registered model in [Unity Catalog](https://docs.databricks.com/en/mlflow/models-in-uc.html#models-in-unity-catalog). Defaults to "databricks_dev_qa_data_analytics_role_data_engineers".
- * ``input_include_feature_store``: If selected, will provide [Databricks Feature Store](https://docs.databricks.com/machine-learning/feature-store/index.html) stack components including: project structure and sample feature Python modules, feature engineering notebooks, ML resource configs to provision and manage Feature Store jobs, and automated integration tests covering feature engineering and training.
+**Project and naming:**
+ * ``input_project_name``: Name of the ML project (e.g., `credit_risk_model`). Used throughout resource names and experiment tracking.
+ * ``input_root_dir``: Root directory for the project (e.g., `domains/data_analytics_ai`). Allows both monorepo and polyrepo setups.
+ * ``input_schema_name``: Name of the Unity Catalog schema where the model will be registered. Recommend matching the project name. Service principals must have `USE_CATALOG`, `USE_SCHEMA`, `MODIFY`, `CREATE_MODEL`, and `CREATE_TABLE` permissions.
 
-See the generated ``README.md`` for next steps!
+**Organization and domains:**
+ * ``input_domain``: Organizational domain for resource naming (e.g., `data_analytics_ai`, `customer_engagement`). Used to construct Databricks group names for permissions.
+
+**Git branching strategy:**
+ * ``input_dev_branch``: Development branch name (default: `dev_qa`). ML code on this branch is deployed to the dev environment.
+ * ``input_test_branch``: Test/UAT branch name (default: `uat`). ML code on this branch is deployed to the UAT environment.
+ * ``input_prod_branch``: Production branch name (default: `prod`). ML code on this branch is deployed to the prod environment.
+
+**Databricks workspace URLs:**
+ * ``input_databricks_dev_workspace_host``: URL of the dev Databricks workspace (e.g., `https://dbc-xxxxx.cloud.databricks.com`).
+ * ``input_databricks_uat_workspace_host``: URL of the UAT Databricks workspace.
+ * ``input_databricks_prod_workspace_host``: URL of the production Databricks workspace.
+
+**Access control:**
+ * ``input_run_role_group``: User group granted RUN (execute) permissions on ML jobs (e.g., `data_scientist`, `data_engineer`). Must exist in all three workspaces.
+ * ``input_dev_manage_role_group``: User group granted MANAGE (edit) permissions on ML jobs in the dev environment.
+ * ``input_unity_catalog_read_user_group``: User group granted READ/EXECUTE privileges on the registered model in [Unity Catalog](https://docs.databricks.com/en/mlflow/models-in-uc.html#models-in-unity-catalog).
+
+**Unity Catalog setup:**
+ * ``input_dev_catalog_name``: Dev environment Unity Catalog name (e.g., `dev_qa_data_analytics_ai`). Must already exist.
+ * ``input_uat_catalog_name``: UAT environment Unity Catalog name (e.g., `uat_data_analytics_ai`). Must already exist.
+ * ``input_prod_catalog_name``: Production environment Unity Catalog name (e.g., `prod_data_analytics_ai`). Must already exist.
+
+**Feature engineering (optional):**
+ * ``input_include_feature_store``: Set to `yes` to include [Databricks Feature Store](https://docs.databricks.com/machine-learning/feature-store/index.html) components: feature modules, feature engineering jobs, and integration tests.
+
+**Monitoring (optional):**
+ * ``input_inference_table_name``: Fully qualified name of an inference table for model monitoring (e.g., `prod_data_analytics_ai.my_schema.predictions`). Must already exist in Unity Catalog.
+
+See the generated ``README.md`` in your project directory for next steps!
 
 ## Customize MLOps Stacks
 Your organization can use the default stack as is or customize it as needed, e.g. to add/remove components or
@@ -137,10 +162,9 @@ the `{{.input_root_dir}}` directory.
 
 To run tests, install [actionlint](https://github.com/rhysd/actionlint),
 [databricks CLI](https://docs.databricks.com/dev-tools/cli/databricks-cli.html), [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm), and
-[act](https://github.com/nektos/act), then install the Python
-dependencies listed in `dev-requirements.txt`:
+[act](https://github.com/nektos/act). Then install the Python dependencies using [uv](https://docs.astral.sh/uv/):
 
-    pip install -r dev-requirements.txt
+    uv sync --all-extras --dev
 
 ### Running the tests
 **NOTE**: This section is for open-source developers contributing to the default stack
