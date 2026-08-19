@@ -226,7 +226,7 @@ def test_generate_project_check_delta_output(
     include_feature_store,
 ):
     """
-    Asserts  the behavior of Delta Table-related artifacts when generating MLOps Stacks.
+    Asserts the behavior of Delta Table-related artifacts when generating MLOps Stacks.
     """
     context = prepareContext(
         cloud,
