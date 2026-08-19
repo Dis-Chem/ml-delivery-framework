@@ -6,9 +6,12 @@ bundle:
   name: {{ .input_project_name }}
 
 variables:
+  schema_name:
+    description: Schema where tables and models are saved
+    default: {{ template `schema_name` .}}
   experiment_name:
     description: Experiment name for the model training.
-    default: /Users/${workspace.current_user.userName}/${bundle.target}-{{template `experiment_base_name` .}}
+    default: {{template `experiment_base_name` .}}
   model_name:
     description: Model name for the model training.
     default: {{template `model_name` .}}
@@ -35,6 +38,24 @@ include:
 
 # Deployment Target specific values for workspace
 targets:
+
+  dev:
+    mode: development
+    default: true
+    variables:
+      catalog_name: {{ .input_dev_catalog_name }}
+    workspace:
+      host: {{ .input_databricks_dev_workspace_host }}
+
+    # Global permissions for all workflows in dev
+    permissions:
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
+        level: CAN_MANAGE
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
+        level: CAN_MANAGE
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
+        level: CAN_MANAGE
+  
   dev_qa:
     default: true
     variables:
