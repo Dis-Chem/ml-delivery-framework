@@ -1,0 +1,87 @@
+# Opt-in resource: quality monitoring on an inference table, plus a job that
+# retrains the pipeline when a monitored metric drifts past its threshold.
+#
+# This file lives one directory below resources/ so that the `./resources/*.yml` glob
+# in databricks.yml does not pick it up. To enable it, create the inference table
+# named below, complete the TODOs, and uncomment the matching `include` entry in
+# databricks.yml.
+#
+# The regression monitor defined here works OOB with this example regression notebook: {{ template `generate_doc_link` (map (pair "path" "_extras/notebooks/source/monitoring/regression-monitor.html")) }}
+# NOTE: Monitoring only works on Unity Catalog tables.
+
+resources:
+  quality_monitors:
+    {{template `project_name_alphanumeric_underscore` .}}_quality_monitor:
+      table_name: {{ .input_inference_table_name }}
+      output_schema_name: ${var.catalog_name}.{{ .input_schema_name }}
+      # TODO: Update the below parameters as per your requirements
+      assets_dir: /Shared/${var.catalog_name}/{{template `project_name_alphanumeric_underscore` .}}/quality_monitors
+      inference_log:
+        granularities: [1 day]
+        model_id_col: model_id
+        prediction_col: prediction
+        label_col: price
+        problem_type: PROBLEM_TYPE_REGRESSION
+        timestamp_col: timestamp
+      schedule:
+        quartz_cron_expression: 0 0 8 * * ? # Run Every day at 8am
+        timezone_id: UTC
+
+  jobs:
+    retraining_job:
+      name: ${bundle.target}-{{template `project_name_alphanumeric_underscore` .}}-monitoring-retraining-job
+      # Same cluster shape as the generated pipeline jobs -- see
+      # conf/<target>/databricks.yml, which is the source of truth for those.
+      job_clusters:
+        - job_cluster_key: default
+          new_cluster:
+            spark_version: {{template `spark_version` .}}
+            node_type_id: {{template `cloud_specific_node_type_id` .}}
+            num_workers: {{template `num_workers` .}}
+      tasks:
+        - task_key: monitored_metric_violation_check
+          job_cluster_key: default
+          notebook_task:
+            # Two levels up: this file sits in resources/monitoring/, the notebook in monitoring/.
+            notebook_path: ../../monitoring/MonitoredMetricViolationCheck.py
+            base_parameters:
+              env: ${bundle.target}
+              table_name_under_monitor: {{ .input_inference_table_name }}
+              # TODO: Update the metric to be monitored and violation threshold
+              metric_to_monitor: root_mean_squared_error
+              metric_violation_threshold: 100
+              num_evaluation_windows: 5
+              num_violation_windows: 2
+              # git source information of current ML resource deployment. It will be persisted as part of the workflow run
+              git_source_info: url:${bundle.git.origin_url}; branch:${bundle.git.branch}; commit:${bundle.git.commit}
+
+        - task_key: is_metric_violated
+          depends_on:
+            - task_key: monitored_metric_violation_check
+          condition_task:
+            op: EQUAL_TO
+            left: "{{"{{tasks.monitored_metric_violation_check.values.is_metric_violated}}"}}"
+            right: "true"
+
+        - task_key: trigger_retraining
+          depends_on:
+            - task_key: is_metric_violated
+              outcome: "true"
+          run_job_task:
+            # The job generated for the Kedro `__default__` pipeline. If you rename the
+            # pipeline or scope retraining to a single pipeline, point this at that
+            # workflow instead (for example ..._iris.id).
+            job_id: ${resources.jobs.{{template `project_name_alphanumeric_underscore` .}}.id}
+
+      schedule:
+        quartz_cron_expression: "0 0 18 * * ?" # daily at 6pm
+        timezone_id: UTC
+      # Job permissions are granted bundle-wide in databricks.yml.
+      #
+      # If you want to turn on notifications for this job, please uncomment the below code,
+      # and provide a list of emails to the on_failure argument.
+      #
+      #  email_notifications:
+      #    on_failure:
+      #      - first@company.com
+      #      - second@company.com
