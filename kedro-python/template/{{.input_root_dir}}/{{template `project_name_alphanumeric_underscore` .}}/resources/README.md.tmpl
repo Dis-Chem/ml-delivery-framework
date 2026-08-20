@@ -1,0 +1,151 @@
+# Databricks ML Resource Configurations
+[(back to project README)](../README.md)
+
+## Table of contents
+* [Intro](#intro)
+* [What is in this directory](#what-is-in-this-directory)
+* [Regenerating the pipeline jobs](#regenerating-the-pipeline-jobs)
+* [Where to change what](#where-to-change-what)
+* [Local development and dev workspace](#local-development-and-dev-workspace)
+* [Develop and test config changes](#develop-and-test-config-changes)
+
+## Intro
+
+### databricks CLI bundles
+Resources in this project are configured and deployed through [databricks CLI bundles]({{ template `generate_doc_link` (map (pair "path" "dev-tools/cli/bundle-cli.html")) }}).
+The bundle setting file must be expressed in YAML format and must contain at minimum the top-level bundle mapping.
+
+The databricks CLI bundles top level is defined by file `{{template `project_name_alphanumeric_underscore` .}}/databricks.yml`.
+During databricks CLI bundles deployment, the root config file will be loaded, validated and deployed to workspace provided by the environment together with all the included resources.
+
+## What is in this directory
+
+```
+resources/
+├── {{template `project_name_alphanumeric_underscore` .}}.yml          <- GENERATED. Job for the Kedro `__default__` pipeline.
+├── ml-artifacts-resource.yml   <- Unity Catalog registered model and MLflow experiment.
+└── monitoring/
+    └── monitoring-resource.yml <- Opt-in quality monitor + retraining job.
+```
+
+`databricks.yml` includes `./resources/*.yml`, so any file added at this level is picked
+up automatically. That is why the opt-in monitoring resource sits in a subdirectory: it
+is enabled by uncommenting its own `include` entry in `databricks.yml`, once the
+inference table it monitors exists.
+
+### The pipeline job
+
+`{{template `project_name_alphanumeric_underscore` .}}.yml` defines one Databricks job
+with one task per Kedro node, wired together by the pipeline's own node dependencies.
+Each task loads the wheel that `kedro package` builds into `../dist` and calls the
+console script declared in `pyproject.toml` under `[project.scripts]`:
+
+```
+--nodes <node name> --conf-source /Workspace/${workspace.file_path}/conf --env ${var.environment}
+```
+
+`${var.environment}` resolves to the deployment target's name, so a task running under
+target `uat` reads `conf/base` layered with `conf/uat`.
+
+## Regenerating the pipeline jobs
+
+The pipeline job files are **generated**, not hand-maintained. After adding, renaming or
+reordering Kedro nodes, regenerate them:
+
+```bash
+kedro databricks bundle --overwrite --env dev_qa
+```
+
+This reads the pipeline definitions from `src/{{template `project_name_alphanumeric_underscore` .}}/pipelines`,
+merges the overrides from `conf/<target>/databricks.yml`, and writes one file per
+registered pipeline. Expect two files:
+
+| File | Kedro pipeline | Notes |
+|---|---|---|
+| `{{template `project_name_alphanumeric_underscore` .}}.yml` | `__default__` | Scheduled daily. Committed with this template. |
+| `{{template `project_name_alphanumeric_underscore` .}}_iris.yml` | `iris` | Not committed. `__default__` is the sum of all pipelines, so while `iris` is the only pipeline this job runs exactly the same nodes; deploying both would create two equivalent jobs. Delete it, or commit it once you have more than one pipeline. |
+
+Review `git diff resources/` after regenerating. Anything hand-added directly to a
+generated file — job permissions, notifications, extra tasks — is **discarded**, because
+the generator rebuilds the file from the pipeline plus the `conf/<target>/databricks.yml`
+overrides. Nothing else is consulted.
+
+The generator also writes YAML without comments, so the explanatory header at the top of
+`{{template `project_name_alphanumeric_underscore` .}}.yml` disappears on the first
+regeneration. That header is the only expected diff for an unchanged pipeline: if
+`git diff` shows anything else, something in the pipeline or the overrides has moved.
+
+## Where to change what
+
+| To change | Edit |
+|---|---|
+| Which nodes run, and in what order | `src/{{template `project_name_alphanumeric_underscore` .}}/pipelines/…`, then regenerate |
+| Cluster size, Spark version, Spark env vars | `conf/<target>/databricks.yml`, then regenerate |
+| Job name or schedule | `conf/<target>/databricks.yml` (per-workflow keys), then regenerate |
+| Job permissions | `permissions:` at the top level of `databricks.yml` — a job-level block would not survive regeneration, and DAB rejects the same job key being split across two resource files |
+| Workspace hosts, targets, catalogs | `databricks.yml` |
+| Dataset paths per environment | `conf/<target>/catalog.yml` |
+| Registered model / experiment | `ml-artifacts-resource.yml` |
+
+## Local development and dev workspace
+
+### Set up authentication
+
+To set up the databricks CLI using a Databricks personal access token, take the following steps:
+
+1. Follow [databricks CLI]({{ template `generate_doc_link` (map (pair "path" "dev-tools/cli/databricks-cli.html")) }}) to download and set up the databricks CLI locally.
+2. Complete the `TODO` in `databricks.yml` to add the dev workspace URL under `targets.dev_qa.workspace.host` if it is not already correct for your organisation.
+3. Set up authentication:
+
+```
+$ databricks configure --host <your host>
+```
+
+### Validate and provision resources
+
+1. After installing the databricks CLI and creating the token, you can validate the bundle:
+
+```
+$ databricks bundle validate
+```
+
+2. Then deploy the resources to your dev workspace. `databricks.yml` declares an
+   `artifacts` entry that runs `kedro package` for you, so the wheel is rebuilt on
+   every deploy:
+
+```
+$ databricks bundle deploy --target dev_qa
+```
+
+3. Trigger a run without waiting for the schedule:
+
+```
+$ databricks bundle run {{template `project_name_alphanumeric_underscore` .}} --target dev_qa
+```
+
+### Destroy resources
+
+To destroy the resources you have provisioned:
+
+```
+$ databricks bundle destroy --target dev_qa
+```
+
+## Develop and test config changes
+
+Because the pipeline jobs are generated, the loop for a config change is:
+
+1. Edit `conf/<target>/databricks.yml` (compute, schedule, job name) or the pipeline itself.
+2. `kedro databricks bundle --overwrite --env dev_qa`
+3. `git diff resources/` and confirm the change is the only one.
+4. `databricks bundle validate --target dev_qa`
+5. `databricks bundle deploy --target dev_qa`
+
+For changes to `databricks.yml`, `ml-artifacts-resource.yml` or the monitoring resource,
+skip step 2 — those files are hand-maintained.
+
+To check what a target resolves to without deploying, use:
+
+```
+$ databricks bundle validate --target uat --output json
+```
