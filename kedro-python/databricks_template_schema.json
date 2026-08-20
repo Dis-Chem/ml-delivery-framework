@@ -14,7 +14,7 @@
       "order": 3,
       "type": "string",
       "default": "domains/{{ .input_domain }}",
-      "description": "\nRoot directory name.\nThe name of the root directory that contains all the projects."
+      "description": "\nRoot directory  name.\nThe name of the root directory that contains all the projects."
     },
       "input_kedro_version": {
       "order": 4,
