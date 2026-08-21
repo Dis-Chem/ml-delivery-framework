@@ -14,7 +14,6 @@ resources:
     {{template `project_name_alphanumeric_underscore` .}}_quality_monitor:
       table_name: {{ .input_inference_table_name }}
       output_schema_name: ${var.catalog_name}.{{ .input_schema_name }}
-      # TODO: Update the below parameters as per your requirements
       assets_dir: /Shared/${var.catalog_name}/{{template `project_name_alphanumeric_underscore` .}}/quality_monitors
       inference_log:
         granularities: [1 day]
