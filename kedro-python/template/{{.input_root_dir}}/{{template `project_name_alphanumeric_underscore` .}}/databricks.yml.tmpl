@@ -90,7 +90,7 @@ targets:
       host: {{ .input_databricks_uat_workspace_host }}
       root_path: /Shared/.bundle/{{ .input_domain }}/${bundle.name}
 
-    # Global permissions for all workflows in uat
+    # Global  permissions for all workflows in uat
     permissions:
       - group_name: databricks_{{ .input_test_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
         level: CAN_RUN
