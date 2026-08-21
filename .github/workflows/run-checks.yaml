@@ -12,7 +12,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: set-matrix
         run: |
           # Find all directories containing a template schema and format as a JSON array
@@ -27,7 +27,7 @@ jobs:
       matrix:
         template_dir: ${{ fromJson(needs.detect-templates.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # PySpark requires a Java Runtime Environment (JVM) to run its underlying coordination engine.
       # Adding this step ensures a valid Java version is available both in GitHub Actions and local 'act' runner environments.
