@@ -1,32 +1,26 @@
 version: 2
 updates:
-  # 1. Global GitHub Actions Check
-  - package-ecosystem: "github-actions"
-    # Scans the root actions files AND any actions bundled inside your template variations
-    directories:
-      - "/"
-      - "/*/template/.github/workflows"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "github-actions"
-
-  # 2. Multi-Template Python Package Check
-  - package-ecosystem: "pip"
-    # Targets the root dev-requirements and all nested template requirement footprints
-    directories:
-      - "/"
-      - "/*/template"
+  # 1. Python Package Updates via uv
+  - package-ecosystem: "uv"
+    directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "python"
-    
-    # Consolidates identical package bumps across multiple template folders into 1 clean PR
     groups:
-      python-monorepo-deps:
-        group-by: dependency-name
+      # Combines updates into a single PR so uv.lock doesn't hit git conflicts
+      python-dependencies:
+        patterns:
+          - "*"
+
+  # 2. Global GitHub Actions Check (Kept from your initial config)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
