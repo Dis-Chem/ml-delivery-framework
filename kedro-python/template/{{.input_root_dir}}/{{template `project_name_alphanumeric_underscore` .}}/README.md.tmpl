@@ -1,0 +1,124 @@
+# {{ .input_project_name }}
+
+A [Kedro](https://docs.kedro.org) project that deploys to Databricks as an asset bundle.
+Every Kedro node becomes a task in a Databricks job, so the same pipeline code runs
+locally and on a cluster with no branching.
+
+It ships with an example machine learning pipeline built on the familiar
+[Iris dataset](https://www.kaggle.com/datasets/uciml/iris), using only PySpark and Kedro:
+
+* `split` — splits the data into train and test sets using a configurable ratio
+* `make_predictions` — runs a 1-nearest-neighbour classifier
+* `report_accuracy` — logs the accuracy of those predictions
+
+[Transcoding](https://docs.kedro.org/en/stable/data/data_catalog_yaml_examples.html#read-the-same-file-using-two-different-datasets)
+converts the Spark DataFrames into pandas DataFrames after the split, so the later nodes
+work with pandas while the read and the split stay in Spark.
+
+## Code structure
+
+```
+{{template `project_name_alphanumeric_underscore` .}}/
+├── databricks.yml              <- Bundle root: name, variables, artifacts, sync, includes, and the dev_qa/uat/prod targets.
+├── pyproject.toml              <- Project metadata. [project.scripts] declares the entry point the Databricks tasks call.
+├── requirements.txt            <- Runtime dependencies.
+│
+├── conf/
+│   ├── base/                   <- Shared Kedro config: catalog.yml, parameters.yml.
+│   ├── local/                  <- Your own credentials and overrides. Never committed.
+│   ├── dev_qa/ uat/ prod/
+│   │                           <- Per-target config. catalog.yml points datasets at that
+│   │                              target's storage; databricks.yml holds the job overrides
+│   │                              that `kedro databricks bundle` merges into resources/.
+│   └── logging.yml
+│
+├── data/                       <- Kedro's layered data directories. Real data lives in the workspace, not here.
+│
+├── src/{{template `project_name_alphanumeric_underscore` .}}/
+│   ├── pipeline_registry.py    <- Discovers pipelines under pipelines/.
+│   ├── settings.py             <- Config loader setup, including the `databricks` config pattern.
+│   └── pipelines/iris/         <- The example pipeline: nodes.py and pipeline.py.
+│
+├── resources/                  <- Databricks resource definitions. See resources/README.md.
+│
+├── monitoring/                 <- Notebooks for the opt-in quality monitoring resource.
+│
+├── notebooks/                  <- Ad-hoc notebooks.
+└── tests/
+```
+
+## Getting started locally
+
+```bash
+pip install -e ".[dev]"
+pytest tests
+kedro registry list     # -> __default__, iris
+```
+
+`conf/base/catalog.yml` points at `/dbfs/FileStore/...`, which only exists on Databricks.
+To run the pipeline on your own machine, add a `catalog.yml` under `conf/local/` with
+local paths and run:
+
+```bash
+kedro run --env local
+```
+
+You can also explore the pipeline graph with `kedro viz`.
+
+## Deploying to Databricks
+
+### 1. Authenticate
+
+Install the [databricks CLI]({{ template `generate_doc_link` (map (pair "path" "dev-tools/cli/databricks-cli.html")) }})
+(v{{template `cli_version` .}} or newer) and configure a profile:
+
+```bash
+databricks configure --host <your workspace host>
+```
+
+Check that the four `targets` in `databricks.yml` name the right workspaces for your
+organisation before your first deploy.
+
+### 2. Deploy
+
+```bash
+databricks bundle validate --target dev_qa
+databricks bundle deploy  --target dev_qa
+```
+
+`databricks.yml` declares an `artifacts` entry that runs `kedro package` as part of the
+deploy, so the wheel in `dist/` is always rebuilt from your current source. The `sync`
+block ships `conf/` to the workspace, which is what the tasks pass to Kedro as
+`--conf-source`.
+
+### 3. Run
+
+```bash
+databricks bundle run {{template `project_name_alphanumeric_underscore` .}} --target dev
+```
+
+The `dev` target uses `mode: development`, so the deployed job is prefixed with your user
+name and its schedule is paused. `staging`, `prod` and `test` deploy the schedule as
+written.
+
+## Changing the pipeline
+
+The job definitions under `resources/` are generated from the Kedro pipelines. After
+editing a pipeline, regenerate them:
+
+```bash
+kedro databricks bundle --overwrite --env dev_qa
+```
+
+Then review `git diff resources/`. See [resources/README.md](./resources/README.md) for
+what is generated, what is hand-maintained, and where to change cluster size, schedules
+and permissions.
+
+### A note on the entry point
+
+The Databricks tasks invoke the project by console-script name, and that name is derived
+from `tool.kedro.project_name` by lowercasing it and replacing every non-letter with a
+dash. Because digits become dashes too, a project named `my-project2` gets the script
+name `my-project`. `pyproject.toml` already declares the correct name under
+`[project.scripts]`; if you rename it, the deployed tasks will fail to start until
+`resources/` is regenerated to match.

@@ -1,0 +1,63 @@
+# Catalog overrides for the 'dev_qa' deployment target.
+#
+# The datasets below mirror conf/base/catalog.yml but resolve their paths against
+# `_file_path` instead of hardcoding /dbfs/FileStore, so the same pipeline code
+# reads and writes target-appropriate storage. Keys prefixed with an underscore are
+# ignored by the Data Catalog and used purely for interpolation.
+
+_file_path: /dbfs/FileStore/{{ .input_project_name }}/dev_qa
+
+example_iris_data:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/01_raw/iris.csv
+  file_format: csv
+  load_args:
+    header: True
+    inferSchema: True
+  save_args:
+    header: True
+
+# 'mode: overwrite' means each run replaces the dataset rather than appending.
+X_train@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/02_intermediate/X_train.parquet
+  save_args:
+    mode: overwrite
+
+X_train@pandas:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/02_intermediate/X_train.parquet
+
+X_test@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/02_intermediate/X_test.parquet
+  save_args:
+    mode: overwrite
+
+X_test@pandas:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/02_intermediate/X_test.parquet
+
+y_train@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/02_intermediate/y_train.parquet
+  save_args:
+    mode: overwrite
+
+y_train@pandas:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/02_intermediate/y_train.parquet
+
+y_test@pyspark:
+  type: spark.SparkDatasetV2
+  filepath: ${_file_path}/data/02_intermediate/y_test.parquet
+  save_args:
+    mode: overwrite
+
+y_test@pandas:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/02_intermediate/y_test.parquet
+
+y_pred:
+  type: pandas.ParquetDataset
+  filepath: ${_file_path}/data/03_primary/y_pred.parquet

@@ -1,0 +1,96 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+requires-python = ">=3.10"
+name = "{{template `project_name_alphanumeric_underscore` .}}"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    "ipython>=8.10",
+    "jupyterlab>=3.0",
+    "notebook",
+    "kedro[jupyter]~={{ .input_kedro_version }}",
+    # Extra names use dashes, not the dotted dataset paths: pip normalises extras and
+    # silently ignores names it does not recognise, so "spark.SparkDataset" would
+    # install nothing. `kedro registry` needs spark.SparkDatasetV2 and
+    # pandas.ParquetDataset, which these four groups cover.
+    "kedro-datasets[spark, pandas, spark-sparkdataset, pandas-parquetdataset]>=9.1",
+    "numpy~=2.1"
+]
+
+[project.scripts]
+# This script name is also the `entry_point` that the Databricks python_wheel_task
+# invokes, and it is derived from `tool.kedro.project_name` by kedro-databricks
+# (lowercase, every non-letter replaced by "-", leading/trailing "-" stripped).
+# Because digits become dashes, a project named e.g. "my-project2" gets the script
+# name "my-project". Renaming this key breaks the deployed jobs, so change it only
+# together with resources/{{template `project_name_alphanumeric_underscore` .}}.yml.
+"{{template `project_entrypoint` .}}" = "{{template `project_name_alphanumeric_underscore` .}}.__main__:main"
+
+[project.entry-points."kedro.hooks"]
+
+[project.optional-dependencies]
+docs = [
+    "docutils<0.18.0",
+    "sphinx~=3.4.3",
+    "sphinx_rtd_theme==0.5.1",
+    "nbsphinx==0.8.1",
+    "sphinx-autodoc-typehints==1.11.1",
+    "sphinx_copybutton==0.3.1",
+    "ipykernel>=5.3, <7.0",
+    "Jinja2<3.1.0",
+    "myst-parser~=0.17.2",
+]
+dev = [
+    "pytest-cov>=3,<7",
+    "pytest-mock>=1.7.1, <2.0",
+    "pytest~=7.2",
+    "ruff~=0.12.0",
+    # Regenerates resources/ from the Kedro pipeline definitions:
+    # `kedro databricks bundle --overwrite --env dev`
+    "kedro-databricks~=0.11"
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "{{template `project_name_alphanumeric_underscore` .}}.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
+[tool.kedro]
+package_name = "{{template `project_name_alphanumeric_underscore` .}}"
+project_name = "{{ .input_project_name }}"
+kedro_init_version = "{{ .input_kedro_version }}"
+source_dir = "src"
+
+[tool.pytest.ini_options]
+addopts = """
+--cov-report term-missing \
+--cov src/{{template `project_name_alphanumeric_underscore` .}} -ra"""
+
+[tool.coverage.report]
+fail_under = 0
+show_missing = true
+exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff]
+line-length = 88
+show-fixes = true
+
+[tool.ruff.lint]
+select = [
+    "F",   # Pyflakes
+    "W",   # pycodestyle
+    "E",   # pycodestyle
+    "I",   # isort
+    "UP",  # pyupgrade
+    "PL",  # Pylint
+    "T201", # Print Statement
+]
+ignore = ["E501"]  # Ruff format takes care of line-too-long
