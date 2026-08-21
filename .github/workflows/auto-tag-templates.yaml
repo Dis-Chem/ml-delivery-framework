@@ -1,9 +1,12 @@
-name: Auto-Tag MLops Templates
-
+name: Auto-Tag MLOps Templates
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - '*/template/**'
+
+permissions:
+  contents: write
 
 jobs:
   tag:
@@ -12,51 +15,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          fetch-depth: 2
+          fetch-depth: 0 # Fetches full history so we can diff against the actual commit before the merge
 
       - name: Setup Git Config
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@://github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Process and Tag Multiple Templates
         run: |
-          # 1. Get unique root folders where schema files changed
-          CHANGED_FOLDERS=$(git diff --name-only HEAD~1 HEAD | grep 'databricks_template_schema.json' | awk -F/ '{print $1}' | sort -u)
+          # Uses HEAD^1 to reliably diff against the branch state immediately prior to this push event
+          CHANGED_FOLDERS=$(git diff --name-only HEAD^1 HEAD | grep -E '^[^/]+/template/' | cut -d'/' -f1 | sort -u)
           
           if [ -z "$CHANGED_FOLDERS" ]; then
-            echo "No template schema changes detected."
+            echo "No template folder changes detected."
             exit 0
           fi
 
-          # 2. Loop through each modified folder
           for TEMPLATE_NAME in $CHANGED_FOLDERS; do
-            echo "-----------------------------------"
-            echo "Processing template: $TEMPLATE_NAME"
-            
-            # 3. Extract version from manifest.json
             TEMPLATE_VERSION=$(jq -r ".\"$TEMPLATE_NAME\"" manifest.json)
             
-            # 4. Validate version exists
-            if [ "$TEMPLATE_VERSION" == "null" ] || [ -z "$TEMPLATE_VERSION" ]; then
-              echo "Error: Version for '$TEMPLATE_NAME' not found in manifest.json. Skipping."
+            if [ "$TEMPLATE_VERSION" = "null" ] || [ -z "$TEMPLATE_VERSION" ]; then
+              echo "Warning: Version for '$TEMPLATE_NAME' not found in manifest.json. Skipping."
               continue
             fi
             
             TAG_NAME="${TEMPLATE_NAME}-${TEMPLATE_VERSION}"
-            echo "Generated Tag Name: $TAG_NAME"
             
-            # 5. Check if tag already exists locally or remotely
             if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
-              echo "Warning: Tag '$TAG_NAME' already exists. Skipping to avoid conflicts."
+              echo "⏭️ Skip: Tag '$TAG_NAME' already exists."
             else
-              # Create the tag locally
               git tag "$TAG_NAME"
-              echo "Local tag created."
+              echo "🚀 Created tag: $TAG_NAME"
             fi
           done
 
-          # 6. Push all newly created tags to the remote repository at once
-          echo "-----------------------------------"
-          echo "Pushing tags to origin..."
+          echo "Pushing new tags to origin..."
           git push origin --tags
