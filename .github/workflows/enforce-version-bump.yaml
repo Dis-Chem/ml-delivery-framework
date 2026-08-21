@@ -1,10 +1,8 @@
 name: Enforce Version Bump
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
-      # Watch the entire template directory tree and manifest changes
       - '*/template/**'
       - 'manifest.json'
 
@@ -18,56 +16,38 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # Fetches history so we can diff against the base branch
+          fetch-depth: 0 
 
       - name: Detect Changed Templates
         id: changed-dirs
         run: |
-          # Detect template directories changed between the target branch and the PR HEAD
+          # Finds directories matching */template/ and extracts the root folder name Safely handles missing base references
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '^[^/]+/template/' | cut -d'/' -f1 | sort -u | tr '\n' ' ')
           echo "dirs=${CHANGED}" >> "$GITHUB_OUTPUT"
 
       - name: Verify Manifest Version Changes
         if: steps.changed-dirs.outputs.dirs != ''
         run: |
-          # 1. Fetch the manifest file from the target base branch (main)
           git show origin/${{ github.base_ref }}:manifest.json > old_manifest.json || echo "{}" > old_manifest.json
-
-          # 2. Loop through every dynamically detected template directory
           ERRORS_FOUND=0
-          for dir in ${{ steps.changed-dirs.outputs.dirs }}; do
-            echo "Checking version validation for template: ${dir}"
 
-            # Extract the version string for this template from the branch's manifest.json
+          for dir in ${{ steps.changed-dirs.outputs.dirs }}; do
             NEW_VERSION=$(jq -r --arg pkg "$dir" '.[$pkg]' manifest.json)
-            # Extract the version string for this template from the main branch's manifest.json
             OLD_VERSION=$(jq -r --arg pkg "$dir" '.[$pkg]' old_manifest.json)
 
-            # 3. Block if the package is missing entirely from the manifest
             if [ "$NEW_VERSION" = "null" ]; then
-              echo "❌ Error: Template folder '${dir}' was modified, but is completely missing from manifest.json."
+              echo "Error: Template '${dir}' missing from manifest.json."
               ERRORS_FOUND=$((ERRORS_FOUND + 1))
-
-            # 4. Validate version format matches number.number.number (e.g., 1.0.4 or 12.0.15)
             elif [[ ! "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "❌ Error: Template '${dir}' has an invalid version format: '${NEW_VERSION}'."
-              echo "   Version must strictly follow the standard 'number.number.number' (Semantic Versioning) format (e.g., 1.0.0)."
+              echo "Error: Template '${dir}' uses invalid semver format: '${NEW_VERSION}'."
               ERRORS_FOUND=$((ERRORS_FOUND + 1))
-            
-            # 4. Block if changes were made but the version string matches the main branch exactly
             elif [ "$NEW_VERSION" = "$OLD_VERSION" ]; then
-              echo "❌ Error: Template folder '${dir}' has changes, but its version in manifest.json is still '${OLD_VERSION}'. You must bump this version to pass CI."
+              echo "Error: Template '${dir}' was modified, but its version in manifest.json is still '${OLD_VERSION}'. Increment this version to pass CI."
               ERRORS_FOUND=$((ERRORS_FOUND + 1))
             else
-              echo "✅ Template '${dir}' successfully bumped from '${OLD_VERSION}' to '${NEW_VERSION}'."
+              echo "Template '${dir}' successfully bumped from '${OLD_VERSION}' to '${NEW_VERSION}'."
             fi
           done
 
-          # Clean up temporary manifest copy
           rm -f old_manifest.json
-
-          # 5. Fail the job if any errors were trapped to block the PR merge
-          if [ $ERRORS_FOUND -ne 0 ]; then
-            echo "Merge blocked: Please update manifest.json with appropriate version bumps."
-            exit 1
-          fi
+          if [ $ERRORS_FOUND -ne 0 ]; then exit 1; fi
