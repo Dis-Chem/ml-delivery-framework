@@ -22,6 +22,7 @@ DEFAULT_PARAM_VALUES = {
     "input_schema_name": "schema_name",
     "input_unity_catalog_read_user_group": "databricks_dev_qa_data_analytics_role_data_engineers",
     "input_inference_table_name": "dummy.schema.table",
+    "input_spark_version": "3.5.x-scala2.13"
 }
 
 
