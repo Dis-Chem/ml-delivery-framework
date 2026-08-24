@@ -143,7 +143,7 @@ targets:
         - conf/dev_qa/*.gitkeep
     workspace:
       host: {{ .input_databricks_dev_workspace_host }}
-      root_path: /Shared/.bundle/{{ .input_domain }}/${bundle.name}
+      root_path: /Shared/.bundle/{{ .input_domain }}/ci-tests/${bundle.name}
 
     # Global permissions for all workflows in ci-test
     permissions:
