@@ -24,8 +24,7 @@ During databricks CLI bundles deployment, the root config file will be loaded, v
 resources/
 ├── {{template `project_name_alphanumeric_underscore` .}}.yml          <- GENERATED. Job for the Kedro `__default__` pipeline.
 ├── ml-artifacts-resource.yml   <- Unity Catalog registered model and MLflow experiment.
-└── monitoring/
-    └── monitoring-resource.yml <- Opt-in quality monitor + retraining job.
+└── monitoring-resource.yml <- Opt-in quality monitor + retraining job.
 ```
 
 `databricks.yml` includes `./resources/*.yml`, so any file added at this level is picked

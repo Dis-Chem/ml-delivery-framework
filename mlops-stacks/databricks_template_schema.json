@@ -119,7 +119,7 @@
       "order": 17,
       "type": "string",
       "description": "\nFully qualified name of inference table to attach monitoring to.\nThis table must already exist and service principals must have access.",
-      "default": "{{ .input_dev_branch }}{{ .input_project_name }}.predictions",
+      "default": "{{ .input_dev_branch }}.{{ .input_project_name }}.predictions",
       "pattern": "^[^ .\\-\\/]+(\\.[^ .\\-\\/]+){2}$",
       "pattern_match_failure_message": "Fully qualified Unity Catalog table names must have catalog, schema, and table separated by \".\" and each cannot contain any of the following characters: \" \", \".\", \"-\", \"\\\", \"/\""
     },
