@@ -83,3 +83,23 @@ targets:
         level: CAN_RUN
       - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
         level: CAN_MANAGE
+
+  ci-test:
+    mode: development # Pauses active cron triggers and isolates resource state
+    variables:
+      active_policy_id:
+        lookup:
+          cluster_policy: "dev_qa_ci_test_cluster_policy" # Injects the override policy name
+      catalog_name: {{ .input_dev_catalog_name }}
+    workspace:
+      host: {{ .input_databricks_dev_workspace_host }}
+      root_path: /Shared/.bundle/${bundle.name}
+    
+    # Global permissions for all workflows in dev_qa
+    permissions:
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_dev_manage_role_group }}_write
+        level: CAN_MANAGE
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_{{ .input_run_role_group }}_write
+        level: CAN_RUN
+      - group_name: databricks_{{ .input_dev_branch }}_{{ .input_domain }}_workspace_admin
+        level: CAN_MANAGE
