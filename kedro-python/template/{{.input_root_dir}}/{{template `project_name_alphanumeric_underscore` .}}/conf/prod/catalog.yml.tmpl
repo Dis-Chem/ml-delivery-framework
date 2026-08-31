@@ -8,7 +8,7 @@
 # TODO: replace <your-volume-name> with the Unity Catalog volume this target
 # should read and write. Until then, deploys succeed but pipeline runs fail on
 # the first dataset access.
-_file_path: /Volumes/<your-volume-name>/{{ .input_project_name }}/prod
+_file_path: /Volumes/{{ .input_prod_catalog_name}} //{{ .input_schema_name}}//{{ .input_project_name }}/prod
 
 example_iris_data:
   type: spark.SparkDatasetV2
