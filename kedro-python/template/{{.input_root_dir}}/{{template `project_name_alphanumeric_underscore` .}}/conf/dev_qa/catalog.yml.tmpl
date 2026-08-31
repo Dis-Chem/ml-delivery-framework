@@ -1,11 +1,11 @@
 # Catalog overrides for the 'dev_qa' deployment target.
 #
 # The datasets below mirror conf/base/catalog.yml but resolve their paths against
-# `_file_path` instead of hardcoding /dbfs/FileStore, so the same pipeline code
+# `_file_path` instead of hardcoding /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}/, so the same pipeline code
 # reads and writes target-appropriate storage. Keys prefixed with an underscore are
 # ignored by the Data Catalog and used purely for interpolation.
 
-_file_path: /dbfs/FileStore/{{ .input_project_name }}/dev_qa
+_file_path: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{ .input_project_name }}/dev_qa
 
 example_iris_data:
   type: spark.SparkDatasetV2

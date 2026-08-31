@@ -4,5 +4,11 @@
   "input_include_feature_store": "yes",
   "input_schema_name": "test_project_schema_name",
   "input_unity_catalog_read_user_group": "databricks_dev_qa_data_analytics_role_data_engineers",
-  "input_inference_table_name": "dummy.schema.table"
+  "input_domain": "data_analytics_ai",
+  "input_run_role_group": "data_scientist",
+  "input_dev_manage_role_group": "data_engineer",
+  "input_dev_catalog_name": "dev_qa_data_analytics_ai",
+  "input_uat_catalog_name": "uat_data_analytics_ai",
+  "input_prod_catalog_name": "prod_data_analytics_ai",
+  "input_inference_table_name": "dev_qa_data_analytics_ai.kedro_iris.predictions"
 }
