@@ -1,7 +1,7 @@
 # Catalog overrides for the 'prod' deployment target.
 #
 # The datasets below mirror conf/base/catalog.yml but resolve their paths against
-# `_file_path` instead of hardcoding /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}/, so the same pipeline code
+# `_file_path` instead of hardcoding /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}/, so the same pipeline code
 # reads and writes target-appropriate storage. Keys prefixed with an underscore are
 # ignored by the Data Catalog and used purely for interpolation.
 

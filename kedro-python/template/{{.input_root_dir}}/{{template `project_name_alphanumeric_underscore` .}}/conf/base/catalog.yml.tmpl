@@ -44,7 +44,7 @@
 
 example_iris_data:
   type: spark.SparkDatasetV2
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/01_raw/iris.csv
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/01_raw/iris.csv
   file_format: csv
   load_args:
     header: True
@@ -56,45 +56,45 @@ example_iris_data:
 # for all SparkDatasetV2s.
 X_train@pyspark:
   type: spark.SparkDatasetV2
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/X_train.parquet
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/X_train.parquet
   save_args:
     mode: overwrite
 
 X_train@pandas:
   type: pandas.ParquetDataset
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/X_train.parquet
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/X_train.parquet
 
 X_test@pyspark:
   type: spark.SparkDatasetV2
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/X_test.parquet
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/X_test.parquet
   save_args:
     mode: overwrite
 
 X_test@pandas:
   type: pandas.ParquetDataset
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/X_test.parquet
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/X_test.parquet
 
 y_train@pyspark:
   type: spark.SparkDatasetV2
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/y_train.parquet
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/y_train.parquet
   save_args:
     mode: overwrite
 
 y_train@pandas:
   type: pandas.ParquetDataset
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/y_train.parquet
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/y_train.parquet
 
 y_test@pyspark:
   type: spark.SparkDatasetV2
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/y_test.parquet
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/y_test.parquet
   save_args:
     mode: overwrite
 
 y_test@pandas:
   type: pandas.ParquetDataset
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/y_test.parquet
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/02_intermediate/y_test.parquet
 
 y_pred:
   type: pandas.ParquetDataset
-  filepath: /Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//{{template `project_name_alphanumeric_underscore` .}}/data/03_primary/y_pred.parquet
+  filepath: /Volumes/{{ .input_dev_catalog_name}} //{{ .input_schema_name}}//{{template `project_name_alphanumeric_underscore` .}}/data/03_primary/y_pred.parquet
 
