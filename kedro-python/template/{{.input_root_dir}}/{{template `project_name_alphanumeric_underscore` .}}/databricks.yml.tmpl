@@ -32,14 +32,21 @@ variables:
       dev_qa/uat/prod so they keep using whatever default policy already
       applies to those clusters.
     type: string
-    default: null
+    default: 00178E2BBA06560A
+  experiment_prefix:
+    description: >
+      Optional path prefix under /Shared for the experiments folder. Set only on
+      ci_test so its ephemeral experiments live in a separate subtree from
+      dev_qa's, and ci-test-cleanup.yaml's `bundle destroy -t ci_test` can never
+      touch dev_qa's data.
+    default: ""
 
 # `kedro package` builds the project wheel into ./dist. Every task loads it as a
 # library, so the artifact has to be built before the tasks can start.
 artifacts:
   default:
     type: whl
-    build: kedro package
+    build: uv run kedro package
     path: .
 
 # Kedro reads its configuration from `--conf-source /Workspace/${workspace.file_path}/conf`,
@@ -133,10 +140,8 @@ targets:
     mode: development
     variables:
       catalog_name: {{ .input_dev_catalog_name }}
-      environment: dev_qa
-      active_policy_id:
-        lookup:
-          cluster_policy: "dev_qa_data_analytics_ci_test_cluster_policy"
+      environment: ci_test
+      experiment_prefix: "ci_test/"
     sync:
       include:
         - conf/dev_qa/*.yml
@@ -164,5 +169,7 @@ targets:
           job_clusters:
             - job_cluster_key: default
               new_cluster:
+                node_type_id: i3.xlarge
+                num_workers: 0
                 policy_id: ${var.active_policy_id}
                 apply_policy_default_values: true
