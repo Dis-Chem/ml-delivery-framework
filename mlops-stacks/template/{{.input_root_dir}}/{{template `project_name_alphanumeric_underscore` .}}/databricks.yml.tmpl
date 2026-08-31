@@ -89,7 +89,7 @@ targets:
     variables:
       active_policy_id:
         lookup:
-          cluster_policy: "dev_qa_ci_test_cluster_policy" # Injects the override policy name
+          cluster_policy: "dev_qa_data_analytics_ci_test_cluster_policy" # Injects the override policy name
       catalog_name: {{ .input_dev_catalog_name }}
     workspace:
       host: {{ .input_databricks_dev_workspace_host }}

@@ -55,7 +55,7 @@ pytest tests
 kedro registry list     # -> __default__, iris
 ```
 
-`conf/base/catalog.yml` points at `/dbfs/FileStore/...`, which only exists on Databricks.
+`conf/base/catalog.yml` points at `/Volumes/{{ .input_dev_catalog}} //{{ .input_schema}}//...`, which only exists on Databricks.
 To run the pipeline on your own machine, add a `catalog.yml` under `conf/local/` with
 local paths and run:
 
