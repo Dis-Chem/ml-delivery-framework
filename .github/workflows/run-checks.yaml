@@ -7,45 +7,50 @@ permissions:
   contents: read
 
 jobs:
-  run-tests:
+  detect-templates:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - uses: actions/checkout@v7
+      - id: set-matrix
+        run: |
+          # Find all directories containing a template schema and format as a JSON array
+          DIRS=$(find . -maxdepth 2 -name "databricks_template_schema.json" -exec dirname {} \; | sed 's|./||' | jq -R -s -c 'split("\n") | del(.[] | select(. == ""))')
+          echo "matrix=${DIRS}" >> "$GITHUB_OUTPUT"
+
+  run-tests:
+    needs: detect-templates
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        template_dir: ${{ fromJson(needs.detect-templates.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # PySpark requires a Java Runtime Environment (JVM) to run its underlying coordination engine.
+      # Adding this step ensures a valid Java version is available both in GitHub Actions and local 'act' runner environments.
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
         with:
-          python-version: '3.9'
-      - name: Install act
-        env:
-          # Pinned release + known-good SHA256 of the release binary (no install
-          # script, no mutable branch). Runner is always ubuntu x86_64.
-          ACT_VERSION: v0.2.89
-          ACT_TARBALL: act_Linux_x86_64.tar.gz
-          ACT_SHA256: 0191d6f1f3b716b5c55820032605d05fc3c1cdbf581ebeff655019e5dd1524c0
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+          # Fix: Scope the cache dependency to the specific matrix template directory
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Install dependencies
+        # Fix: Force uv to look inside the specific template directory
         run: |
-          mkdir -p "$HOME/.local/bin"
-          curl -fsSL -o /tmp/act.tar.gz \
-            "https://github.com/nektos/act/releases/download/${ACT_VERSION}/${ACT_TARBALL}"
-          echo "${ACT_SHA256}  /tmp/act.tar.gz" | sha256sum -c -
-          tar -xzf /tmp/act.tar.gz -C "$HOME/.local/bin" act
-          chmod +x "$HOME/.local/bin/act"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          # Pin runner container images to immutable digests.
-          echo "-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest@sha256:5d6a17640b25694988b9db5a4145537b9918e5430116b2cf90d84e837609b382
-          -P ubuntu-20.04=ghcr.io/catthehacker/ubuntu:act-20.04@sha256:29b5352bd8a624bc3332299489548da8aa2831ca39a97a9bc760d27b77aa593a
-          -P ubuntu-18.04=ghcr.io/catthehacker/ubuntu:act-18.04@sha256:a037e34e5a70667384b4941c90618ac1567d7454de572ba0c4420a1cc38cbaa0" > ~/.actrc
-      - name: Install Python dependencies
+          uv sync --all-extras --dev
+
+      - name: Run tests
+        # Fix: Execute pytest with the template directory scoped flag
         run: |
-            python -m pip install --upgrade pip
-            pip install -r dev-requirements.txt
-      - name: Generate CICD Zip
-        run: |
-          cd template/{{.input_root_dir}}
-          cp --parents .github/workflows/\{\{.input_project_name\}\}-* cicd/template
-          cp --parents .azure/devops-pipelines/\{\{.input_project_name\}\}-* cicd/template
-          tar -czvf cicd.tar.gz cicd
-          rm -rf cicd/template/.github cicd/template/.azure
-          cd ../..
-      - name: Run tests with pytest
-        run: |
-          export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          pytest tests --large -vv --black
+          uv run pytest --template-path="${{ matrix.template_dir }}"

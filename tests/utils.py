@@ -5,68 +5,20 @@ import json
 import subprocess
 from functools import wraps
 
-RESOURCE_TEMPLATE_ROOT_DIRECTORY = str(pathlib.Path(__file__).parent.parent)
-
-AZURE_DEFAULT_PARAMS = {
-    "input_setup_cicd_and_project": "CICD_and_Project",
-    "input_root_dir": "my-mlops-project",
+AWS_DEFAULT_PARAMS = {
+    "input_root_dir": "projects",
     "input_project_name": "my-mlops-project",
-    "input_cloud": "azure",
-    "input_cicd_platform": "github_actions",
-    "input_databricks_staging_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
-    "input_databricks_prod_workspace_host": "https://adb-xxxx.xx.azuredatabricks.net",
-    "input_default_branch": "main",
-    "input_release_branch": "release",
-    "input_read_user_group": "users",
     "input_include_feature_store": "no",
     "input_schema_name": "schema_name",
-    "input_unity_catalog_read_user_group": "account users",
+    "input_unity_catalog_read_user_group": "databricks_dev_qa_data_analytics_role_data_engineers",
     "input_inference_table_name": "dummy.schema.table",
 }
 
-AWS_DEFAULT_PARAMS = {
-    **AZURE_DEFAULT_PARAMS,
-    "input_cloud": "aws",
-    "input_databricks_staging_workspace_host": "https://your-staging-workspace.cloud.databricks.com",
-    "input_databricks_prod_workspace_host": "https://your-prod-workspace.cloud.databricks.com",
-}
-
-GCP_DEFAULT_PARAMS = {
-    **AZURE_DEFAULT_PARAMS,
-    "input_cloud": "gcp",
-    "input_databricks_staging_workspace_host": "https://your-staging-workspace.gcp.databricks.com",
-    "input_databricks_prod_workspace_host": "https://your-prod-workspace.gcp.databricks.com",
-}
-
-
-def parametrize_by_cloud(fn):
-    @wraps(fn)
-    @pytest.mark.parametrize("cloud", ["aws", "azure", "gcp"])
-    def wrapper(*args, **kwargs):
-        return fn(*args, **kwargs)
-
-    return wrapper
-
 
 def parametrize_by_project_generation_params(fn):
-    @pytest.mark.parametrize("cloud", ["aws", "azure", "gcp"])
     @pytest.mark.parametrize(
-        "cicd_platform",
-        [
-            "github_actions",
-            "github_actions_for_github_enterprise_servers",
-            "azure_devops",
-        ],
-    )
-    @pytest.mark.parametrize(
-        "setup_cicd_and_project,include_feature_store",
-        [
-            ("CICD_and_Project", "no"),
-            ("CICD_and_Project", "yes"),
-            ("Project_Only", "no"),
-            ("Project_Only", "yes"),
-            ("CICD_Only", "no"),
-        ],
+        "include_feature_store",
+        ["no", "yes"],
     )
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -79,54 +31,21 @@ def parametrize_by_project_generation_params(fn):
 def generated_project_dir(
     tmpdir,
     databricks_cli,
-    cloud,
-    cicd_platform,
-    setup_cicd_and_project,
     include_feature_store,
+    template_path,
 ):
     params = {
-        "input_setup_cicd_and_project": setup_cicd_and_project,
-        "input_root_dir": "my-mlops-project",
-        "input_cloud": cloud,
+        "input_root_dir": "projects",
+        "input_include_feature_store": include_feature_store,
     }
-    if setup_cicd_and_project != "Project_Only":
-        params.update(
-            {
-                "input_cicd_platform": cicd_platform,
-                "input_databricks_staging_workspace_host": "https://adb-3214.67.azuredatabricks.net",
-                "input_databricks_prod_workspace_host": "https://adb-345.89.azuredatabricks.net",
-                "input_default_branch": "main",
-                "input_release_branch": "release",
-            }
-        )
-    if setup_cicd_and_project != "CICD_Only":
-        params.update(
-            {
-                "input_project_name": "my-mlops-project",
-                "input_include_feature_store": include_feature_store,
-                "input_read_user_group": "users",
-                "input_schema_name": "schema_name",
-                "input_unity_catalog_read_user_group": "account users",
-                "input_inference_table_name": "dummy.schema.table",
-            }
-        )
-    generate(tmpdir, databricks_cli, params)
+
+    generate(tmpdir, databricks_cli, params, template_path)
     return tmpdir
-
-
-def read_workflow(tmpdir):
-    return (tmpdir / "my-mlops-project" / ".github/workflows/run-tests.yml").read_text(
-        "utf-8"
-    )
 
 
 def markdown_checker_configs(tmpdir):
     markdown_checker_config_dict = {
-        "ignorePatterns": [
-            {"pattern": "http://127.0.0.1:5000"},
-            {"pattern": "https://adb-3214.67.azuredatabricks.net*"},
-            {"pattern": "https://adb-345.89.azuredatabricks.net*"},
-        ],
+        "ignorePatterns": [{"pattern": "http://127.0.0.1:5000"}],
         "httpHeaders": [
             {
                 "urls": ["https://docs.github.com/"],
@@ -137,17 +56,21 @@ def markdown_checker_configs(tmpdir):
 
     file_name = "checker-config.json"
 
-    with open(tmpdir / "my-mlops-project" / file_name, "w") as outfile:
+    with open(tmpdir / "projects" / file_name, "w") as outfile:
         json.dump(markdown_checker_config_dict, outfile)
 
 
-def generate(directory, databricks_cli, context):
-    if context.get("input_cloud") == "aws":
-        default_params = AWS_DEFAULT_PARAMS
-    elif context.get("input_cloud") == "gcp":
-        default_params = GCP_DEFAULT_PARAMS
-    else:
-        default_params = AZURE_DEFAULT_PARAMS
+def generate(directory, databricks_cli, context, template_path):
+    """
+    Generates a Databricks Asset Bundle project using the MLOps Stacks template.
+
+    :param directory: Target output directory (pathlib.Path or str)
+    :param databricks_cli: Path to the databricks CLI executable
+    :param context: Dictionary of template variables to override defaults
+    :param template_path: Optional relative path to a specific monorepo template folder
+    """
+    default_params = AWS_DEFAULT_PARAMS
+
     params = {
         **default_params,
         **context,
@@ -155,15 +78,35 @@ def generate(directory, databricks_cli, context):
     json_string = json.dumps(params)
     config_file = directory / "config.json"
     config_file.write(json_string)
+
+    # 1. Capture the system's current environment variables
+    custom_env = os.environ.copy()
+
+    # 2. Inject modern Databricks authentication variables
+    custom_env["DATABRICKS_HOST"] = "https://123"
+    custom_env["DATABRICKS_TOKEN"] = "dapi123"
+
+    # 3. Explicitly resolve the target template directory using the required parameter
+    repo_root = pathlib.Path(__file__).parent.parent
+    target_template_directory = repo_root / template_path
+
+    # 4. Execute bundle init safely using a list structure
+    command = [
+        str(databricks_cli),
+        "bundle",
+        "init",
+        str(target_template_directory),
+        "--config-file",
+        str(config_file),
+        "--output-dir",
+        str(directory),
+    ]
+
     subprocess.run(
-        f"echo dapi123 | {databricks_cli} configure --host https://123",
-        shell=True,
+        command,
+        shell=False,  # Securely handles arguments without standard shell parsing rules
         check=True,
-    )
-    subprocess.run(
-        f"{databricks_cli} bundle init {RESOURCE_TEMPLATE_ROOT_DIRECTORY} --config-file {config_file} --output-dir {directory}",
-        shell=True,
-        check=True,
+        env=custom_env,  # Bypasses interactive prompts seamlessly
     )
 
 
@@ -182,7 +125,7 @@ def databricks_cli(tmp_path_factory):
         text=True,
     )
 
-    yield f"{databricks_cli_dir}/databricks"
+    yield str(databricks_cli_dir / "databricks")
     # no need to remove the files as they are in test temp dir
 
 

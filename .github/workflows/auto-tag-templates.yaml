@@ -1,0 +1,54 @@
+name: Auto-Tag MLOps Templates
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*/template/**'
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # Fetches full history so we can diff against the actual commit before the merge
+
+      - name: Setup Git Config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Process and Tag Multiple Templates
+        run: |
+          # Uses HEAD^1 to reliably diff against the branch state immediately prior to this push event
+          CHANGED_FOLDERS=$(git diff --name-only HEAD^1 HEAD | grep -E '^[^/]+/template/' | cut -d'/' -f1 | sort -u)
+          
+          if [ -z "$CHANGED_FOLDERS" ]; then
+            echo "No template folder changes detected."
+            exit 0
+          fi
+
+          for TEMPLATE_NAME in $CHANGED_FOLDERS; do
+            TEMPLATE_VERSION=$(jq -r ".\"$TEMPLATE_NAME\"" manifest.json)
+            
+            if [ "$TEMPLATE_VERSION" = "null" ] || [ -z "$TEMPLATE_VERSION" ]; then
+              echo "Warning: Version for '$TEMPLATE_NAME' not found in manifest.json. Skipping."
+              continue
+            fi
+            
+            TAG_NAME="${TEMPLATE_NAME}-${TEMPLATE_VERSION}"
+            
+            if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+              echo "⏭️ Skip: Tag '$TAG_NAME' already exists."
+            else
+              git tag "$TAG_NAME"
+              echo "🚀 Created tag: $TAG_NAME"
+            fi
+          done
+
+          echo "Pushing new tags to origin..."
+          git push origin --tags

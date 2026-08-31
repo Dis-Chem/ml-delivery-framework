@@ -1,45 +1,64 @@
 name: Generate CICD Zip
 on:
-  push:
+  pull_request:
     branches:
       - main
     paths:
-      - 'template/{{.input_root_dir}}/.github/workflows/{{.input_project_name}}**'
-      - 'template/{{.input_root_dir}}/.azure/devops-pipelines/{{.input_project_name}}**'
+      # Watch ALL files inside any template root directory
+      - '*/template/**'
+      # Ignore the generated archive itself to prevent an infinite loop
+      - '!**/cicd.tar.gz'
 
-defaults:
-  run:
-    working-directory: template/{{.input_root_dir}}
-
-# Scoped to what the PR-creation flow needs; no long-lived PAT. The regenerated
-# tarball is proposed as a reviewable PR rather than pushed straight to main.
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  generate-zip:
+  detect-and-generate-zip:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Generate CICD Zip
-        run: |
-          cp --parents .github/workflows/\{\{.input_project_name\}\}-* cicd/template
-          cp --parents .azure/devops-pipelines/\{\{.input_project_name\}\}-* cicd/template
-          tar -czvf cicd.tar.gz cicd
-      - name: Open PR with regenerated CICD Zip
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+      - uses: actions/checkout@v7
         with:
-          # Only the generated artifact; nothing else is committed.
-          add-paths: template/{{.input_root_dir}}/cicd.tar.gz
-          commit-message: "Generate CICD Zip File for ${{ github.sha }}"
-          branch: auto/regenerate-cicd-zip
-          delete-branch: true
-          title: "Regenerate CICD Zip for ${{ github.sha }}"
-          body: |
-            Automated regeneration of `cicd.tar.gz` triggered by changes to the
-            CI/CD template files in `${{ github.sha }}`.
+          ref: ${{ github.event.pull_request.head.ref }}
 
-            Review the diff and merge to keep the checked-in artifact in sync.
-          committer: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
-          author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+      # Step 1: Detect which top-level template subfolders actually changed
+      - name: Detect Changed Templates
+        id: changed-dirs
+        run: |
+          # Matches paths starting with <dir-name>/template/
+          CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E '^[^/]+/template/' | cut -d'/' -f1 | sort -u | tr '\n' ' ')
+          echo "dirs=${CHANGED}" >> "$GITHUB_OUTPUT"
+
+      # Step 2: Loop over every changed template subfolder and regenerate its localized cicd.tar.gz
+      - name: Generate CICD Zips
+        if: steps.changed-dirs.outputs.dirs != ''
+        run: |
+          for dir in ${{ steps.changed-dirs.outputs.dirs }}; do
+            echo "Processing template directory: ${dir}"
+            
+            cd "$dir/template"
+            
+            # Ensure target directory path exists
+            mkdir -p cicd/template
+            
+            # Pack the workflows into the bundle matching original structure
+            cp --parents .github/workflows/* cicd/template 2>/dev/null || true
+            tar -czvf cicd.tar.gz cicd
+            
+            cd -
+          done
+
+      # Step 3: Push the updated zip files directly back into the open PR branch
+      - name: Commit and Push Changes back to PR
+        if: steps.changed-dirs.outputs.dirs != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@://github.com"
+          
+          git add **/cicd.tar.gz
+          
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(cicd): auto-regenerate cicd.tar.gz due to template modifications"
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          else
+            echo "No archive payload variations detected. Skipping commit."
+          fi

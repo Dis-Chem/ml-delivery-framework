@@ -1,7 +1,21 @@
 version: 2
 updates:
-  # Keep GitHub Actions pinned to SHAs up to date (Dependabot updates the SHA
-  # and the trailing version comment together).
+  # 1. Python Package Updates via uv
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      # Combines updates into a single PR so uv.lock doesn't hit git conflicts
+      python-dependencies:
+        patterns:
+          - "*"
+
+  # 2. Global GitHub Actions Check (Kept from your initial config)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -10,13 +24,3 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
-
-  # Python dev/test dependencies.
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "python"

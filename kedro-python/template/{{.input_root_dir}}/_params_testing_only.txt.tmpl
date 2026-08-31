@@ -1,0 +1,18 @@
+input_root_dir={{.input_root_dir}}
+input_project_name={{.input_project_name}}
+input_kedro_version={{.input_kedro_version}}
+input_include_feature_store={{.input_include_feature_store}}
+input_schema_name={{.input_schema_name}}
+input_unity_catalog_read_user_group={{.input_unity_catalog_read_user_group}}
+input_inference_table_name={{.input_inference_table_name}}
+
+databricks_uat_workspace_host={{ template `databricks_uat_workspace_host` . }}
+databricks_prod_workspace_host={{ template `databricks_prod_workspace_host` . }}
+cloud_specific_node_type_id={{ template `cloud_specific_node_type_id` . }}
+spark_version={{ template `spark_version` . }}
+num_workers={{ template `num_workers` . }}
+model_name={{ template `model_name` . }}
+experiment_base_name={{ template `experiment_base_name` . }}
+project_name_alphanumeric_underscore={{ template `project_name_alphanumeric_underscore` . }}
+project_entrypoint={{ template `project_entrypoint` . }}
+cli_version={{ template `cli_version` . }}

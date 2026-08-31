@@ -1,0 +1,53 @@
+name: Enforce Version Bump
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '*/template/**'
+      - 'manifest.json'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 
+
+      - name: Detect Changed Templates
+        id: changed-dirs
+        run: |
+          # Finds directories matching */template/ and extracts the root folder name Safely handles missing base references
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '^[^/]+/template/' | cut -d'/' -f1 | sort -u | tr '\n' ' ')
+          echo "dirs=${CHANGED}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify Manifest Version Changes
+        if: steps.changed-dirs.outputs.dirs != ''
+        run: |
+          git show origin/${{ github.base_ref }}:manifest.json > old_manifest.json || echo "{}" > old_manifest.json
+          ERRORS_FOUND=0
+
+          for dir in ${{ steps.changed-dirs.outputs.dirs }}; do
+            NEW_VERSION=$(jq -r --arg pkg "$dir" '.[$pkg]' manifest.json)
+            OLD_VERSION=$(jq -r --arg pkg "$dir" '.[$pkg]' old_manifest.json)
+
+            if [ "$NEW_VERSION" = "null" ]; then
+              echo "Error: Template '${dir}' missing from manifest.json."
+              ERRORS_FOUND=$((ERRORS_FOUND + 1))
+            elif [[ ! "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Error: Template '${dir}' uses invalid semver format: '${NEW_VERSION}'."
+              ERRORS_FOUND=$((ERRORS_FOUND + 1))
+            elif [ "$NEW_VERSION" = "$OLD_VERSION" ]; then
+              echo "Error: Template '${dir}' was modified, but its version in manifest.json is still '${OLD_VERSION}'. Increment this version to pass CI."
+              ERRORS_FOUND=$((ERRORS_FOUND + 1))
+            else
+              echo "Template '${dir}' successfully bumped from '${OLD_VERSION}' to '${NEW_VERSION}'."
+            fi
+          done
+
+          rm -f old_manifest.json
+          if [ $ERRORS_FOUND -ne 0 ]; then exit 1; fi

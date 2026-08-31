@@ -1,0 +1,135 @@
+{
+  "welcome_message": "Welcome to X, bigly labs ML Delivery Templates. For detailed information on project generation, see the README at https://github.com/databricks/mlops-stacks/blob/main/README.md.",
+  "min_databricks_cli_version": "v0.236.0",
+  "properties": {
+    "input_project_name": {
+      "order": 2,
+      "type": "string",
+      "default": "my_mlops_project",
+      "description": "\nProject Name. Default",
+      "pattern": "^[^ .\\\\/]{3,}$",
+      "pattern_match_failure_message": "Project name must be at least 3 characters long and cannot contain the following characters: \"\\\", \"/\", \" \" and \".\"."
+    },
+    "input_root_dir": {
+      "order": 3,
+      "type": "string",
+      "default": "domains/{{ .input_domain }}",
+      "description": "\nRoot directory name.\nFor monorepos, name of the root directory that contains all the projects.\nDefault"
+    },
+    "input_dev_branch": {
+      "order": 8,
+      "type": "string",
+      "default": "dev_qa",
+      "description": "\nName of the dev branch,\nDevelopment resources are deployed from this branch.\nDefault"
+    },
+    "input_test_branch": {
+      "order": 9,
+      "type": "string",
+      "default": "uat",
+      "description": "\nName of the test branch.\nThe training and other uat jobs pull ML code from this branch.\nDefault"
+    },
+    "input_prod_branch": {
+      "order": 9,
+      "type": "string",
+      "default": "prod",
+      "description": "\nName of the production branch.\nThe training and other production jobs pull ML code from this branch.\nDefault"
+    },
+    "input_domain": {
+      "order": 3,
+      "type": "string",
+      "default": "data_analytics_ai",
+      "description": "\nRoot directory name.\nFor monorepos, name of the root directory that contains all the projects.\nDefault",
+      "enum": ["data_analytics_ai", "customer_engagement", "data_analytics_engineering", "integrated_digital_enablement", "integrated_health_enablement", "cdi", "wholesale_innovation"]
+    },
+    "input_databricks_dev_workspace_host": {
+      "order": 6,
+      "type": "string",
+      "default": "https://dbc-26cf5e15-d40d.cloud.databricks.com",
+      "description": "\nURL of dev Databricks workspace,\nIt will run PR CI and preview changes before they're deployed to production.\nDefault",
+      "pattern": "^(https.*)?$",
+      "pattern_match_failure_message": "Databricks dev workspace host URLs must start with https. Got invalid workspace host."
+    },
+    "input_databricks_uat_workspace_host": {
+      "order": 7,
+      "type": "string",
+      "default": "https://dbc-9f6e09b3-ca38.cloud.databricks.com",
+      "description": "\nURL of UAT Databricks workspace.\nDefault",
+      "pattern": "^(https.*)?$",
+      "pattern_match_failure_message": "Databricks UAT workspace host URLs must start with https. Got invalid workspace host."
+    },
+    "input_databricks_prod_workspace_host": {
+      "order": 7,
+      "type": "string",
+      "default": "https://dbc-cd0b5c83-b24b.cloud.databricks.com",
+      "description": "\nURL of production Databricks workspace.\nDefault",
+      "pattern": "^(https.*)?$",
+      "pattern_match_failure_message": "Databricks production workspace host URLs must start with https. Got invalid workspace host."
+    },
+    "input_run_role_group": {
+      "order": 10,
+      "type": "string",
+      "default": "data_scientist",
+      "description": "\nUser group name to give READ permissions to for project resources\n(ML jobs, integration test job runs, and machine learning resources).\nA group with this name must exist in both the dev, uat and prod workspaces.\nDefault",
+      "enum": ["data_scientist", "data_analytics", "data_engineer"]
+    },
+    "input_dev_manage_role_group": {
+      "order": 10,
+      "type": "string",
+      "default": "data_engineer",
+      "description": "\nUser group name to give MANAGE permissions to for project resources\n(ML jobs, integration test job runs, and machine learning resources).\nA group with this name must exist in both the dev, uat and prod workspaces.\nDefault",
+      "enum": ["data_scientist", "data_analytics", "data_engineer"]
+    },
+    "input_dev_catalog_name": {
+      "order": 12,
+      "type": "string",
+      "description": "\nName of the catalog in Unity Catalog that will host the dev UC resources. \nThis catalog must already exist and service principals must have access to it.\nDefault",
+      "default": "dev_qa_data_analytics_ai",
+      "enum": ["dev_qa_data_analytics_ai", "dev_qa_customer_engagement", "dev_qa_data_analytics_raw", "dev_qa_data_analytics_curated", "dev_qa_data_analytics_domain_model", "dev_qa_integrated_digital_enablement", "dev_qa_integrated_health_enablement"]
+    },
+    "input_uat_catalog_name": {
+      "order": 12,
+      "type": "string",
+      "description": "\nName of the catalog in Unity Catalog that will host the uat UC resources. \nThis catalog must already exist and service principals must have access to it.\nDefault",
+      "default": "uat_data_analytics_ai",
+      "enum": ["uat_data_analytics_ai", "uat_qa_customer_engagement", "uat_qa_data_analytics_raw", "uat_qa_data_analytics_curated", "uat_qa_data_analytics_domain_model", "uat_qa_integrated_digital_enablement", "uat_qa_integrated_health_enablement"]
+    },
+    "input_prod_catalog_name": {
+      "order": 13,
+      "type": "string",
+      "description": "\nName of the catalog in Unity Catalog that will host the production UC resources.\nThis catalog must already exist and service principals must have access to it.\nDefault",
+      "default": "prod_data_analytics_ai",
+      "enum": ["prod_data_analytics_ai", "prod_qa_customer_engagement", "prod_qa_data_analytics_raw", "prod_qa_data_analytics_curated", "prod_qa_data_analytics_domain_model", "prod_qa_integrated_digital_enablement", "prod_qa_integrated_health_enablement"]
+    },
+    "input_unity_catalog_read_user_group": {
+      "order": 14,
+      "type": "string",
+      "description": "\nUser group name to give READ permissions to for project resources\n(ML jobs, integration test job runs, and machine learning resources).\nA group with this name must exist in both the dev, uat and prod workspaces.\nDefault",
+      "default": "databricks_dev_qa_data_analytics_role_data_scientists",
+      "enum": ["databricks_dev_qa_data_analytics_role_data_engineers", "databricks_dev_qa_data_analytics_role_data_scientists", "databricks_dev_qa_data_analytics_role_data_analytics", "databricks_uat_data_analytics_role_data_engineers", "databricks_uat_data_analytics_role_data_scientists", "databricks_uat_data_analytics_role_data_analytics", "databricks_prod_data_analytics_role_data_engineers", "databricks_prod_data_analytics_role_data_scientists", "databricks_prod_data_analytics_role_data_analytics"]
+    },
+    "input_schema_name": {
+      "order": 15,
+      "type": "string",
+      "description": "\nName of schema to use when registering a model in Unity Catalog.\nThis schema must already exist and service principals must have access.\nWe recommend using the project name.\nDefault",
+      "default": "{{ .input_project_name }}",
+      "pattern": "^[^ .\\-\\/]*$",
+      "pattern_match_failure_message": "Valid schema names cannot contain any of the following characters: \" \", \".\", \"-\", \"\\\", \"/\""
+    },
+    "input_inference_table_name": {
+      "order": 17,
+      "type": "string",
+      "description": "\nFully qualified name of inference table to attach monitoring to.\nThis table must already exist and service principals must have access.",
+      "default": "{{ .input_dev_branch }}.{{ .input_project_name }}.predictions",
+      "pattern": "^[^ .\\-\\/]+(\\.[^ .\\-\\/]+){2}$",
+      "pattern_match_failure_message": "Fully qualified Unity Catalog table names must have catalog, schema, and table separated by \".\" and each cannot contain any of the following characters: \" \", \".\", \"-\", \"\\\", \"/\""
+    },
+    "input_include_feature_store": {
+      "order": 18,
+      "type": "string",
+      "description": "\nWhether to include Feature Store",
+      "default": "yes",
+      "enum": ["no", "yes"]
+    }
+  },
+  "success_message" : "\n*** Your Project Template has been created in the '{{.input_root_dir}}/{{.input_project_name}}' directory! ***\n\nPlease refer to the README.md for further instructions on getting started."
+}
