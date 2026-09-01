@@ -17,9 +17,9 @@ dependencies = [
     # install nothing. `kedro registry` needs spark.SparkDatasetV2 and
     # pandas.ParquetDataset, which these four groups cover.
     "kedro-datasets[spark, pandas, spark-sparkdataset, pandas-parquetdataset]>=9.1",
-    "numpy~=2.1"
+    "numpy~=2.1",
     "pyspark>=3.5.0,<3.6.0",
-    "kedro-databricks~=0.18"
+    "kedro-databricks~=0.18",
 ]
 
 [project.scripts]
