@@ -1,6 +1,6 @@
 {
   "name": "ml-delivery-framework",
-  "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": "latest",
     "ghcr.io/jsburckhardt/devcontainer-features/uv:1": "latest"
