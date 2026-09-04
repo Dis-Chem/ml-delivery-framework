@@ -5,18 +5,15 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 echo "Creating Python virtual environment..."
-# 2. Initialize an isolated virtual environment matching the container's Python 3.12
-uv venv
-
-# 2. Activate the virtual environment for the rest of the script
-source .venv/bin/activate
+# Initialize an isolated virtual environment matching the container's Python 3.12
+uv venv .venv
 
 echo "Installing project and development dependencies from pyproject.toml..."
-# 3. Fast-install the local project in editable mode along with its 'dev' dependency group
-uv pip install -e .[dev]
+# Fast-install the local project in editable mode along with its 'dev' dependency group
+uv pip install --python .venv/bin/python -e .[dev]
 
 echo "Installing complementary CLI tools..."
-# 4. Install complementary dependencies inside the virtual environment
-uv pip install databricks
+# Install complementary dependencies inside the virtual environment
+uv pip install --python .venv/bin/python databricks
 
 echo "Post-create environment configuration completed successfully!"
